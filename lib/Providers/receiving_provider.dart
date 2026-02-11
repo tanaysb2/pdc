@@ -145,7 +145,6 @@ class ReceivingProvider with ChangeNotifier {
       competitorCode = list.isNotEmpty ? list.first.competitorCode : '';
     }
 
-     
     final result = await createDocument(
       context,
       docType: docType,
@@ -320,7 +319,9 @@ class ReceivingProvider with ChangeNotifier {
         departments = departmentResponse.data;
         if (departments.isNotEmpty &&
             (selectedDepartment == null ||
-                !departments.any((d) => d.departmentCode == selectedDepartment))) {
+                !departments.any(
+                  (d) => d.departmentCode == selectedDepartment,
+                ))) {
           selectedDepartment = departments.first.departmentCode;
         }
         notifyListeners();
@@ -638,8 +639,7 @@ class ReceivingProvider with ChangeNotifier {
       });
       binList = demoBinList;
       if (binList.isNotEmpty &&
-          (selectedBin == null ||
-              !binList.any((b) => b.code == selectedBin))) {
+          (selectedBin == null || !binList.any((b) => b.code == selectedBin))) {
         selectedBin = binList.first.code;
       }
       log("${binList.length} binList");
@@ -715,6 +715,13 @@ class ReceivingProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
         final data = json.decode(responseBody) as Map<String, dynamic>?;
+        if (data != null &&
+            data["message"] == "Document created successfully") {
+          EasyLoading.showToast(
+            data["message"],
+            maskType: EasyLoadingMaskType.black,
+          );
+        }
         return data;
       } else {
         final responseBody = await response.stream.bytesToString();
