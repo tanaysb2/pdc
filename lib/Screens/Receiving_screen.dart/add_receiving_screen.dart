@@ -334,7 +334,7 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
 
                               // Type dropdown (jk/others)
                               Text(
-                                'Type',
+                                'Company Type',
                                 style: textFieldStyle(
                                   color: Colors.black,
                                   fontSize: 26.sp,
@@ -506,7 +506,7 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
 
                               // Location dropdown
                               Text(
-                                'Select Location',
+                                'Location',
                                 style: textFieldStyle(
                                   color: Colors.black,
                                   fontSize: 26.sp,

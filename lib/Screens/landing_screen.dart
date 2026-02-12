@@ -604,11 +604,17 @@ class _MyAppState extends State<LandingPageScreen> {
                                     },
                                     child: gridCustom(
                                       element.moduleName == "Transfer"
+                                          ? "assets/MM.svg"
+                                          : element.moduleName == "Receive"
                                           ? "assets/return.svg"
                                           : "assets/inward.svg",
                                       element.moduleName,
-                                      show: true,
-                                      size: true,
+                                      show: element.moduleName == "Transfer"
+                                          ? false
+                                          : true,
+                                      size: element.moduleName == "Transfer"
+                                          ? false
+                                          : true,
                                     ),
                                   ),
                                   SizedBox(width: 5.w),

@@ -281,7 +281,7 @@ Widget customTile(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Order #",
+                              "Document #",
                               style: textFieldStyle(
                                 color: Colors.grey.shade800,
                                 fontSize: 26.sp,
@@ -309,7 +309,7 @@ Widget customTile(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Ord. Date",
+                              "Doc. Date",
                               style: textFieldStyle(
                                 color: Colors.grey.shade800,
                                 fontSize: 26.sp,
@@ -339,7 +339,7 @@ Widget customTile(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Tyre Type",
+                              "Company",
                               style: textFieldStyle(
                                 color: Colors.grey.shade800,
                                 fontSize: 26.sp,
@@ -414,7 +414,7 @@ Widget customTile(
                       SizedBox(height: 3.h),
                       Text(
                         document.remark ?? "",
-                        maxLines: 3,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: textFieldStyle(
                           color: Color.fromARGB(255, 1, 77, 138),
