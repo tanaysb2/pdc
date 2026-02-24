@@ -76,7 +76,7 @@ class _MyAppState extends State<LandingPageScreen> {
             // ignore: use_build_context_synchronously
             context,
             listen: false,
-          ).getPurposes(context).then((value) {
+          ).getPurposes(context, forwardValue).then((value) {
             Provider.of<ReceivingProvider>(
               // ignore: use_build_context_synchronously
               context,
@@ -513,7 +513,7 @@ class _MyAppState extends State<LandingPageScreen> {
                                       right: 10.0,
                                     ),
                                     child: DropdownButtonHideUnderline(
-                                      child: new DropdownButton<String>(
+                                      child: DropdownButton<String>(
                                         dropdownColor: Color.fromARGB(
                                           255,
                                           14,
@@ -523,7 +523,7 @@ class _MyAppState extends State<LandingPageScreen> {
                                         iconEnabledColor: Colors.white,
                                         focusColor: Colors.white,
                                         value: valueSelect,
-                                        style: new TextStyle(
+                                        style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 26.0,
                                         ),
@@ -603,16 +603,16 @@ class _MyAppState extends State<LandingPageScreen> {
                                       );
                                     },
                                     child: gridCustom(
-                                      element.moduleName == "Transfer"
+                                      element.moduleName == "Gate In"
                                           ? "assets/MM.svg"
                                           : element.moduleName == "Receive"
                                           ? "assets/return.svg"
                                           : "assets/inward.svg",
                                       element.moduleName,
-                                      show: element.moduleName == "Transfer"
+                                      show: element.moduleName == "Gate In"
                                           ? false
                                           : true,
-                                      size: element.moduleName == "Transfer"
+                                      size: element.moduleName == "Gate In"
                                           ? false
                                           : true,
                                     ),
@@ -659,15 +659,13 @@ Widget gridCustom(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Container(
-          child: SvgPicture.asset(
-            imagePath,
-            fit: BoxFit.cover,
-            height: size ? 130.h : 90.h,
-            width: size ? 130.h : 90.w,
-            // ignore: deprecated_member_use
-            color: Colors.black,
-          ),
+        SvgPicture.asset(
+          imagePath,
+          fit: BoxFit.cover,
+          height: size ? 130.h : 90.h,
+          width: size ? 130.h : 90.w,
+          // ignore: deprecated_member_use
+          color: Colors.black,
         ),
         if (!show) SizedBox(height: 30.h),
         if (detailShow) SizedBox(height: 10.h),

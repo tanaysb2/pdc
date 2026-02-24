@@ -9,6 +9,7 @@ import 'package:pdc/Resuable%20components/app_bar.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
 import 'package:pdc/Resuable%20components/text_field.dart';
 import 'package:pdc/Screens/Receiving_screen.dart/add_receiving_screen.dart';
+import 'package:pdc/Screens/Receiving_screen.dart/receiving_scan_screen.dart';
 import 'package:provider/provider.dart';
 
 // ignore: must_be_immutable
@@ -40,39 +41,37 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
       _isLoading = true;
     });
 
+    log("documentType: ${widget.type}");
+    log("departmentCode: MG");
+    log("location: ${widget.location}");
+
     Provider.of<ReceivingProvider>(context, listen: false)
-        .fetchDocuments(context)
+        .fetchDocuments(context, widget.type, "MG", widget.location)
         .then((value) {
           Provider.of<ReceivingProvider>(
             // ignore: use_build_context_synchronously
             context,
             listen: false,
             // ignore: use_build_context_synchronously
-          ).fetchDepartments(context).then((value) {
+          ).fetchDepartments(context, widget.location).then((value) {
             Provider.of<ReceivingProvider>(
               // ignore: use_build_context_synchronously
               context,
               listen: false,
               // ignore: use_build_context_synchronously
-            ).fetchCompetitors(context).then((value) {
+            ).fetchCompetitors(context, widget.location).then((value) {
               Provider.of<ReceivingProvider>(
                 // ignore: use_build_context_synchronously
                 context,
                 listen: false,
                 // ignore: use_build_context_synchronously
-              ).fetchReasons(context);
+              ).fetchReasons(context, widget.location);
             });
           });
         })
         .then((value) {
           setState(() {
             _isLoading = false;
-          });
-        })
-        .onError((error, stackTrace) {
-          setState(() {
-            _isLoading = false;
-            errorShow = true;
           });
         });
   }
@@ -104,7 +103,8 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
   Widget build(BuildContext context) {
     final item = Provider.of<ReceivingProvider>(context, listen: true);
 
-    log(widget.location);
+    log("location: ${widget.location}");
+    log("type: ${widget.type}");
 
     return errorShow
         ? Stack(
@@ -230,23 +230,24 @@ Widget customTile(
 ) {
   return InkWell(
     onTap: () {
-      // Navigator.of(context)
-      //     .push(
-      //       MaterialPageRoute(
-      //         builder: (context) {
-      //           return QaCageDetailScreen(
-      //             location: location,
-      //             type: type,
-      //             pickListnos: dispatch.pickListNo,
-      //             docType: dispatch.docType,
-      //             ordType: dispatch.ordType,
-      //           );
-      //         },
-      //       ),
-      //     )
-      //     .then((value) {
-      //       callback();
-      //     });
+      Navigator.of(context)
+          .push(
+            MaterialPageRoute(
+              builder: (context) {
+                return ReceivingScanScreen(
+                  location: "",
+                  type: type,
+                  pickListnos: '',
+                  invoiceNo: '',
+                  docType: '',
+                  ordType: '',
+                );
+              },
+            ),
+          )
+          .then((value) {
+            callback();
+          });
     },
     child: Container(
       width: double.infinity,
@@ -288,7 +289,9 @@ Widget customTile(
                                 weight: FontWeight.w500,
                               ),
                             ),
+
                             SizedBox(height: 3.h),
+
                             SizedBox(
                               width: 320.w,
                               child: Text(
@@ -301,6 +304,7 @@ Widget customTile(
                                 ),
                               ),
                             ),
+
                             SizedBox(height: 10.h),
                           ],
                         ),

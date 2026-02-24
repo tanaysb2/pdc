@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart';
 import 'package:pdc/Modules/bin_model.dart';
 import 'package:pdc/Modules/document_detail_model.dart';
@@ -14,6 +15,7 @@ import 'package:pdc/Modules/purpose_modal.dart';
 import 'package:pdc/Modules/rack_model.dart';
 import 'package:pdc/Modules/reasons_model.dart';
 import 'package:pdc/Modules/homepage_model.dart';
+import 'package:pdc/Modules/scan_module.dart';
 import 'package:pdc/Urls/url_holder_loan.dart';
 import 'package:pdc/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,16 +26,22 @@ class ReceivingProvider with ChangeNotifier {
 
   List<DocumentData> documents = [];
   DocumentDetailData? documentDetail;
+  String errorMessage = "";
   List<Department> departments = [];
   List<Competitor> competitors = [];
   List<Reason> reasons = [];
   List<String> locationList = [];
   List<Purpose> purposes = [];
   List<Bin> binList = [];
+  final player = AudioPlayer();
   List<Rack> rackList = [];
   List<Module> modules = [];
+  TextEditingController barcodeManualController = TextEditingController();
   bool showBin = false;
   bool showRack = false;
+
+  /// Last scan response data, populated on successful [scanDocument].
+  ScanModuleData? lastScanData;
 
   // Add Receiving form state (dropdowns)
   String selectedType = "JK Tyre";
@@ -154,13 +162,13 @@ class ReceivingProvider with ChangeNotifier {
       storageLocation: storageLocation,
       binCode: binCode,
       rackCode: rackCode,
-      departmentCode: departmentCode,
+      departmentCode: 'MG',
       location: location,
       remark: remark.isEmpty ? null : remark,
     );
 
     if (result != null) {
-      await fetchDocuments(context);
+      await fetchDocuments(context, docType, departmentCode, location);
       if (context.mounted) Navigator.of(context).pop();
       return true;
     }
@@ -170,57 +178,54 @@ class ReceivingProvider with ChangeNotifier {
   /// Fetch documents from API and populate [documents] list.
   ///
   /// Returns `true` on success, `false` on failure.
-  Future<bool> fetchDocuments(BuildContext context) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString("userToken");
+  Future<bool> fetchDocuments(
+    BuildContext context,
+    String documentType,
+    String departmentCode,
+    String location,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("userToken");
 
-      if (token == null || token.isEmpty) {
-        return false;
+    if (token == null || token.isEmpty) {
+      return false;
+    }
+
+    log('token: $location');
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    final request = Request(
+      'GET',
+      Uri.parse(
+        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}?documentType=$documentType&departmentCode=$departmentCode&location=$location',
+      ),
+    );
+
+    request.headers.addAll(headers);
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final body = await response.stream.bytesToString();
+      final Map<String, dynamic> jsonData = json.decode(body);
+
+      final documentResponse = DocumentResponse.fromJson(jsonData);
+      documents = documentResponse.data;
+      notifyListeners();
+      return true;
+    } else {
+      final body = await response.stream.bytesToString();
+
+      bool? checkVibrate = await Vibration.hasVibrator();
+      if (checkVibrate == true) {
+        Vibration.vibrate();
       }
 
-      log('token: ${token}');
+      _player.play(AssetSource('audio/error.wav'));
 
-      final headers = {'Authorization': 'Bearer $token'};
-
-      final request = Request(
-        'GET',
-        Uri.parse('${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}'),
-      );
-
-      request.headers.addAll(headers);
-
-      final response = await request.send().timeout(
-        const Duration(seconds: 60),
-      );
-
-      if (response.statusCode == 200) {
-        final body = await response.stream.bytesToString();
-        final Map<String, dynamic> jsonData = json.decode(body);
-
-        final documentResponse = DocumentResponse.fromJson(jsonData);
-        documents = documentResponse.data;
-        notifyListeners();
-        return true;
-      } else {
-        final body = await response.stream.bytesToString();
-
-        bool? checkVibrate = await Vibration.hasVibrator();
-        if (checkVibrate == true) {
-          Vibration.vibrate();
-        }
-
-        _player.play(AssetSource('audio/error.wav'));
-
-        final message = _extractErrorMessage(body);
-        EasyLoading.showToast(message, maskType: EasyLoadingMaskType.black);
-        return false;
-      }
-    } catch (e) {
-      EasyLoading.showToast(
-        "Connectivity issue, Please try again",
-        maskType: EasyLoadingMaskType.black,
-      );
+      final message = _extractErrorMessage(body);
+      EasyLoading.showToast(message, maskType: EasyLoadingMaskType.black);
       return false;
     }
   }
@@ -289,7 +294,7 @@ class ReceivingProvider with ChangeNotifier {
   /// Fetch list of departments from API and populate [departments] list.
   ///
   /// Returns `true` on success, `false` on failure.
-  Future<bool> fetchDepartments(BuildContext context) async {
+  Future<bool> fetchDepartments(BuildContext context, String location) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString("userToken");
@@ -302,7 +307,9 @@ class ReceivingProvider with ChangeNotifier {
 
       final request = Request(
         'GET',
-        Uri.parse('${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDepartments}'),
+        Uri.parse(
+          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDepartments}?location=$location',
+        ),
       );
 
       request.headers.addAll(headers);
@@ -352,7 +359,7 @@ class ReceivingProvider with ChangeNotifier {
   /// Fetch list of competitors from API and populate [competitors] list.
   ///
   /// Returns `true` on success, `false` on failure.
-  Future<bool> fetchCompetitors(BuildContext context) async {
+  Future<bool> fetchCompetitors(BuildContext context, String location) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString("userToken");
@@ -365,7 +372,9 @@ class ReceivingProvider with ChangeNotifier {
 
       final request = Request(
         'GET',
-        Uri.parse('${UrlHolderLoan.baseUrl}${UrlHolderLoan.getCompetitors}'),
+        Uri.parse(
+          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getCompetitors}?location=$location',
+        ),
       );
 
       request.headers.addAll(headers);
@@ -411,7 +420,7 @@ class ReceivingProvider with ChangeNotifier {
   /// Fetch list of reasons from API and populate [reasons] list.
   ///
   /// Returns `true` on success, `false` on failure.
-  Future<bool> fetchReasons(BuildContext context) async {
+  Future<bool> fetchReasons(BuildContext context, String location) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString("userToken");
@@ -424,7 +433,9 @@ class ReceivingProvider with ChangeNotifier {
 
       final request = Request(
         'GET',
-        Uri.parse('${UrlHolderLoan.baseUrl}${UrlHolderLoan.getReasons}'),
+        Uri.parse(
+          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getReasons}?location=$location',
+        ),
       );
 
       request.headers.addAll(headers);
@@ -469,7 +480,7 @@ class ReceivingProvider with ChangeNotifier {
     }
   }
 
-  Future getPurposes(BuildContext context) async {
+  Future getPurposes(BuildContext context, String location) async {
     List<Purpose> txpurposes = [];
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -479,7 +490,9 @@ class ReceivingProvider with ChangeNotifier {
 
       var request = Request(
         'GET',
-        Uri.parse('${UrlHolderLoan.baseUrl}${UrlHolderLoan.purpose}'),
+        Uri.parse(
+          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.purpose}?location=$location',
+        ),
       );
       request.headers.addAll(headers);
 
@@ -563,6 +576,61 @@ class ReceivingProvider with ChangeNotifier {
       );
       return null;
     }
+  }
+
+  Future showDialogForallDialog(BuildContext context, String text) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 20.0.w, vertical: 20.h),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  SizedBox(height: 10.0),
+                  Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: 30.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 10.0),
+                  SizedBox(
+                    width: 120.w,
+                    height: 70.h,
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          player.stop();
+                          Navigator.of(context).pop();
+                        },
+                        child: Text(
+                          'OK',
+                          style: TextStyle(
+                            fontSize: 28.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future getRack(String location, String storageLocation, String bin) async {
@@ -732,6 +800,7 @@ class ReceivingProvider with ChangeNotifier {
 
         final message = _extractErrorMessage(responseBody);
         EasyLoading.showToast(message, maskType: EasyLoadingMaskType.black);
+        lastScanData = null;
         return null;
       }
     } catch (e) {
@@ -801,6 +870,95 @@ class ReceivingProvider with ChangeNotifier {
     }
   }
 
+  /// Scans a barcode for a PDC document line item via POST.
+  ///
+  /// [documentNumber] e.g. "JK-1770884172670"
+  /// [barcode] scanned barcode
+  /// [lineItemNo] line item number
+  /// [docType] e.g. "RE"
+  /// [location] e.g. "1100"
+  /// [storageLocation] e.g. "FG10"
+  /// [binCode] optional
+  /// [rackCode] optional
+  ///
+  /// Returns `true` on success, `false` on failure. Stores [ScanModuleData] in [lastScanData] on success.
+  Future<bool> scanDocument(
+    BuildContext context, {
+    required String documentNumber,
+    required String barcode,
+    required String lineItemNo,
+    required String docType,
+    required String location,
+    required String storageLocation,
+    String binCode = "",
+    String rackCode = "",
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("userToken");
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+      final body = {
+        "barcode": barcode,
+        "lineItemNo": lineItemNo,
+        "docType": docType,
+        "location": location,
+        "storageLocation": storageLocation,
+        "binCode": binCode,
+        "rackCode": rackCode,
+      };
+
+      final request = Request(
+        'POST',
+        Uri.parse(
+          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}/$documentNumber/scan',
+        ),
+      );
+      request.body = json.encode(body);
+      request.headers.addAll(headers);
+
+      final response = await request.send().timeout(
+        const Duration(seconds: 60),
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final decoded = json.decode(responseBody) as Map<String, dynamic>;
+        lastScanData = ScanModuleResponse.fromJson(decoded).data;
+        notifyListeners();
+        return true;
+      } else {
+        final responseBody = await response.stream.bytesToString();
+        bool? checkVibrate = await Vibration.hasVibrator();
+        if (checkVibrate == true) {
+          Vibration.vibrate();
+        }
+        _player.play(AssetSource('audio/error.wav'));
+        final message = _extractErrorMessage(responseBody);
+        EasyLoading.showToast(message, maskType: EasyLoadingMaskType.black);
+        lastScanData = null;
+        return false;
+      }
+    } catch (e) {
+      EasyLoading.showToast(
+        "Connectivity issue, Please try again",
+        maskType: EasyLoadingMaskType.black,
+      );
+      lastScanData = null;
+      return false;
+    }
+  }
+
+  void getManualBarcode(String resultData) {
+    barcodeManualController = TextEditingController();
+    barcodeManualController = TextEditingController(text: resultData);
+    notifyListeners();
+  }
+
   String _extractErrorMessage(String body) {
     try {
       final data = json.decode(body);
@@ -811,5 +969,79 @@ class ReceivingProvider with ChangeNotifier {
       // ignore and fall back to default message
     }
     return "Something went wrong. Please try again.";
+  }
+
+  /// Unscan a document item by posting the unscan request.
+  ///
+  /// Returns the response body as [Map<String, dynamic>] if status code is 200,
+  /// otherwise returns null.
+  ///
+  /// [documentNumber] is the unique identifier for the document.
+  /// [barcode], [lineItemNo], [docType], [location], [storageLocation], [binCode], [rackCode] are request parameters.
+  Future<Map<String, dynamic>?> unscanDocument({
+    required String documentNumber,
+    required String barcode,
+    required String lineItemNo,
+    required String docType,
+    required String location,
+    required String storageLocation,
+    String binCode = "",
+    String rackCode = "",
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("userToken");
+
+      if (token == null || token.isEmpty) {
+        EasyLoading.showToast(
+          "Please login again",
+          maskType: EasyLoadingMaskType.black,
+        );
+        return null;
+      }
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+      final url = Uri.parse(
+        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}/$documentNumber/unscan',
+      );
+
+      final requestBody = {
+        "barcode": barcode,
+        "lineItemNo": lineItemNo,
+        "docType": docType,
+        "location": location,
+        "storageLocation": storageLocation,
+        "binCode": binCode,
+        "rackCode": rackCode,
+      };
+
+      final request = Request('POST', url);
+      request.body = json.encode(requestBody);
+      request.headers.addAll(headers);
+
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        final body = await response.stream.bytesToString();
+        return json.decode(body) as Map<String, dynamic>;
+      } else {
+        final body = await response.stream.bytesToString();
+        EasyLoading.showToast(
+          _extractErrorMessage(body),
+          maskType: EasyLoadingMaskType.black,
+        );
+        return null;
+      }
+    } catch (e) {
+      EasyLoading.showToast(
+        "Connectivity issue, Please try again",
+        maskType: EasyLoadingMaskType.black,
+      );
+      return null;
+    }
   }
 }

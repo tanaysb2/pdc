@@ -473,36 +473,35 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                               ),
                               SizedBox(height: 20.h),
 
-                              // Department dropdown
-                              Text(
-                                'Department',
-                                style: textFieldStyle(
-                                  color: Colors.black,
-                                  fontSize: 26.sp,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
+                              // // Department dropdown
+                              // Text(
+                              //   'Department',
+                              //   style: textFieldStyle(
+                              //     color: Colors.black,
+                              //     fontSize: 26.sp,
+                              //     weight: FontWeight.w600,
+                              //   ),
+                              // ),
 
-                              SizedBox(height: 10.h),
-                              Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(horizontal: 15.w),
-                                child: DropdownButtonHideUnderline(
-                                  child: _buildDepartmentDropdown(
-                                    item.departments,
-                                    item.selectedDepartment,
-                                    item.setSelectedDepartment,
-                                  ),
-                                ),
-                              ),
-
-                              SizedBox(height: 20.h),
+                              // SizedBox(height: 10.h),
+                              // Container(
+                              //   decoration: BoxDecoration(
+                              //     border: Border.all(
+                              //       color: Colors.grey,
+                              //       width: 2,
+                              //     ),
+                              //     borderRadius: BorderRadius.circular(10),
+                              //   ),
+                              //   padding: EdgeInsets.symmetric(horizontal: 15.w),
+                              //   child: DropdownButtonHideUnderline(
+                              //     child: _buildDepartmentDropdown(
+                              //       item.departments,
+                              //       item.selectedDepartment,
+                              //       item.setSelectedDepartment,
+                              //     ),
+                              //   ),
+                              // ),
+                              // SizedBox(height: 20.h),
 
                               // Location dropdown
                               Text(
