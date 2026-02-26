@@ -1225,6 +1225,8 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                                       _isLoading = false;
                                     });
                                   },
+
+                                  //kjndkjasnd
                                   child: Text('Yes'),
                                 ),
                                 TextButton(
