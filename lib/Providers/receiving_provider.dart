@@ -123,7 +123,7 @@ class ReceivingProvider with ChangeNotifier {
     notifyListeners();
   }
 
-    Future<BarcodeDetails> fetchMappingData(
+  Future<BarcodeDetails> fetchMappingData(
       BuildContext context, String location) async {
     selectedMaterial = "";
     selectedPrefix = "";
@@ -247,9 +247,6 @@ class ReceivingProvider with ChangeNotifier {
     }
   }
 
-
-
-
   Future<bool> markAsCompleted(String picklistNo, String location,
       String orderType, BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -298,8 +295,6 @@ class ReceivingProvider with ChangeNotifier {
       return false;
     }
   }
-
-
 
   /// Submits the Add Receiving form: calls [createDocument] with current dropdown values and [remark], then resets form on success.
   Future<bool> submitAddReceiving(
@@ -1401,11 +1396,11 @@ class ReceivingProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final txtoken = prefs.getString("userToken");
     var headers = {'Authorization': 'Bearer $txtoken'};
-    log('${UrlHolderLoan.baseUrl}${UrlHolderLoan.scanBarcode}?barcode=${barcode.trimRight()}&pickListNo=${pickListNos.trimRight()}&docType=${docType.trimRight()}&ordType=TT&location=$location&storageLocation=&deviceId=');
+    log('${UrlHolderLoan.baseUrl}${UrlHolderLoan.scanBarcode}?barcode=${barcode.trimRight()}&pickListNo=${pickListNos.trimRight()}&docType=${docType.trimRight()}&ordType=TT&location=$location&fromstrg=&deviceId=');
     var request = Request(
         removeBarcode ? 'DELETE' : 'GET',
         Uri.parse(
-            '${UrlHolderLoan.baseUrl}${UrlHolderLoan.scanBarcode}?barcode=${barcode.trimRight()}&pickListNo=${pickListNos.trimRight()}&docType=${docType.trimRight()}&ordType=TT&location=$location&storageLocation=&deviceId='));
+            '${UrlHolderLoan.baseUrl}${UrlHolderLoan.scanBarcode}?barcode=${barcode.trimRight()}&pickListNo=${pickListNos.trimRight()}&docType=${docType.trimRight()}&ordType=TT&location=$location&fromstrg=&deviceId=&binCd=&rackCd='));
 
     request.headers.addAll(headers);
 

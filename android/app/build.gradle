@@ -16,10 +16,10 @@ def flutterVersionCode = localProperties.getProperty("flutter.versionCode") ?: "
 def flutterVersionName = localProperties.getProperty("flutter.versionName") ?: "1.0"
 
 android {
-    namespace "com.circuskitchens.flutter_datawedge_example" // ✅ Must match AndroidManifest.xml package
+    namespace "com.circuskitchens.pdc"
 
-    compileSdkVersion 36
-
+    compileSdk 36
+ 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -34,7 +34,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.circuskitchens.flutter_datawedge_example" // ✅ Must match namespace
+        applicationId "com.circuskitchens.pdc"
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
@@ -53,4 +53,5 @@ flutter {
 }
 
 dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }

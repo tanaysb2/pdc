@@ -1,4 +1,4 @@
-package com.circuskitchens.flutter_datawedge_example
+package com.circuskitchens.pdc
 
 import io.flutter.embedding.android.FlutterActivity
 

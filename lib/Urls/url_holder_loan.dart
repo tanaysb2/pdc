@@ -34,7 +34,7 @@ class UrlHolderLoan {
       "v1/order/materialtransfer/order";
   static const singleDispatch = "v1/order/dispatch/order";
   static const singleSto = "v1/order/sto/order";
-  static const scanBarcode = "v1/barcode";
+  static const scanBarcode = "v1/barcode/pid";
   // static const scanBarcodeForQaCage = "v1/barcode/barcodenew";
   static const getCages = "v1/general/cage";
   static const getLocationCage = "v1/general/cagelocations";

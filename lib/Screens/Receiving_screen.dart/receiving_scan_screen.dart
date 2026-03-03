@@ -527,7 +527,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
   Future<void> initScanner() async {
     if (Platform.isAndroid) {
       // final item = Provider.of<ReceivingProvider>(context, listen: false);
-      fdw = FlutterDataWedge(profileName: 'flutter wedge');
+      fdw = FlutterDataWedge(profileName: 'PDC wedge');
       onScanResultListener =
           fdw.onScanResult.listen((result) => setState(() async {
                 scanResults = result;
@@ -939,6 +939,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                         //     ],
                         //   ),
                         // ),
+                      
                         SizedBox(height: 10.h),
 
                         //////
@@ -969,83 +970,11 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                             ),
                             child: Column(
                               children: [
-                                // if (checkSuccess == 1)
-                                //   Row(
-                                //     crossAxisAlignment: CrossAxisAlignment.end,
-                                //     mainAxisAlignment: MainAxisAlignment.end,
-                                //     children: [
-                                //       CircleAvatar(
-                                //         backgroundColor:
-                                //             item.showCircleLight == "R"
-                                //             ? Colors.red
-                                //             : Colors.green,
-                                //         radius: 28.r,
-                                //       ),
-                                //     ],
-                                //   ),
-                                // if (item.skuNo == "0" || item.skuNo.isEmpty)
-                                //   SizedBox(height: 15.h),
-                                // if (checkSuccess == 1)
-                                //   Row(
-                                //     children: [
-                                //       Expanded(
-                                //         child: BarcodeInfo(
-                                //           header: "Barcode",
-                                //           info: item.barcodeShow,
-                                //         ),
-                                //       ),
-                                //       if (item.skuNo != "0" &&
-                                //           item.skuNo.isNotEmpty)
-                                //         ElevatedButton(
-                                //           onPressed: () {
-                                //             Navigator.of(context).push(
-                                //               MaterialPageRoute(
-                                //                 builder: (context) {
-                                //                   return OldStkScreen(
-                                //                     location: widget.location,
-                                //                     materialCode: item.matnr,
-                                //                     materialDesc: item.material,
-                                //                     date: item.prodDate,
-                                //                   );
-                                //                 },
-                                //               ),
-                                //             );
-                                //           },
-                                //           style: ElevatedButton.styleFrom(
-                                //             backgroundColor: Color.fromARGB(
-                                //               255,
-                                //               84,
-                                //               157,
-                                //               217,
-                                //             ),
-                                //             foregroundColor: Colors.grey,
-                                //             padding: EdgeInsets.symmetric(
-                                //               horizontal: 20.w,
-                                //               vertical: 10.h,
-                                //             ),
-                                //           ),
-                                //           child: Text(
-                                //             "Old Stk : ${item.skuNo}",
-                                //             style: TextStyle(
-                                //               fontSize: 28.sp,
-                                //               fontWeight: FontWeight.bold,
-                                //               color: Colors.white,
-                                //             ),
-                                //           ),
-                                //         ),
-                                //       // BarcodeInfoOldSKu(
-                                //       //     header: "Old Sku", info: "5")
-                                //     ],
-                                //   ),
-                                // if (item.skuNo == "0" || item.skuNo.isEmpty)
-                                //   SizedBox(height: 15.h),
-
                                 if (checkSuccess == 1)
                                   BarcodeInfo(
                                     header: "Mfg Date",
                                     info: item.prodDate,
                                   ),
-
                                 SizedBox(height: 15.h),
                                 if (checkSuccess == 1)
                                   BarcodeInfo(
@@ -1390,3 +1319,5 @@ Widget customTileDown(
     ),
   );
 }
+
+ 
