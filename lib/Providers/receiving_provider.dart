@@ -735,9 +735,6 @@ class ReceivingProvider with ChangeNotifier {
     String? remark,
   }) async {
     try {
-      log(
-        "createDocument inputs: docType=$docType, competitorCode=$competitorCode, purposeCode=$purposeCode, reasonCode=$reasonCode, storageLocation=$storageLocation, binCode=$binCode, rackCode=$rackCode, departmentCode=$departmentCode, location=$location, remark=$remark",
-      );
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString("userToken");
 
