@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pdc/Modules/bin_model.dart';
 import 'package:pdc/Modules/competitors_model.dart';
 import 'package:pdc/Modules/department_model.dart';
 import 'package:pdc/Modules/purpose_modal.dart';
-import 'package:pdc/Modules/bin_model.dart';
 import 'package:pdc/Modules/rack_model.dart';
 import 'package:pdc/Modules/reasons_model.dart';
 import 'package:pdc/Providers/receiving_provider.dart';
-import 'package:pdc/Resuable components/text_field.dart';
 import 'package:pdc/Resuable%20components/app_bar.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
+import 'package:pdc/Resuable%20components/text_field.dart';
 import 'package:provider/provider.dart';
 
 class AddReceivingScreen extends StatefulWidget {
@@ -32,8 +32,8 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
     provider.fetchLocations(widget.location).then((_) {
       if (!mounted) return;
       final p = Provider.of<ReceivingProvider>(context, listen: false);
-      if (p.locationList.isNotEmpty && p.selectedLocation != null) {
-        p.getBin(widget.location, p.selectedLocation!);
+      if (p.locationList.isNotEmpty && p.selectedLocationss != null) {
+        p.getBin(widget.location, p.selectedLocationss!);
       }
     });
   }
@@ -63,8 +63,8 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
     final names = _uniqueCompetitorNames(competitors);
     final validValue =
         selectedCompany != null && names.contains(selectedCompany)
-        ? selectedCompany
-        : (names.isNotEmpty ? names.first : null);
+            ? selectedCompany
+            : (names.isNotEmpty ? names.first : null);
     return DropdownButton<String>(
       iconEnabledColor: Colors.black,
       value: validValue,
@@ -94,8 +94,8 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
     final codes = purposes.map((p) => p.purposeCode).toList();
     final validValue =
         selectedPurpose != null && codes.contains(selectedPurpose)
-        ? selectedPurpose
-        : (codes.isNotEmpty ? codes.first : null);
+            ? selectedPurpose
+            : (codes.isNotEmpty ? codes.first : null);
     return DropdownButton<String>(
       iconEnabledColor: Colors.black,
       value: validValue,
@@ -161,8 +161,8 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
     final codes = departments.map((d) => d.departmentCode).toList();
     final validValue =
         selectedDepartment != null && codes.contains(selectedDepartment)
-        ? selectedDepartment
-        : (codes.isNotEmpty ? codes.first : null);
+            ? selectedDepartment
+            : (codes.isNotEmpty ? codes.first : null);
     return DropdownButton<String>(
       iconEnabledColor: Colors.black,
       value: validValue,
@@ -193,8 +193,8 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
   ) {
     final validValue =
         selectedLocation != null && locationList.contains(selectedLocation)
-        ? selectedLocation
-        : (locationList.isNotEmpty ? locationList.first : null);
+            ? selectedLocation
+            : (locationList.isNotEmpty ? locationList.first : null);
     return DropdownButton<String>(
       iconEnabledColor: Colors.black,
       value: validValue,
@@ -221,9 +221,8 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
     String? selectedRack,
     ValueChanged<String?> onChanged,
   ) {
-    final validRacks = rackList
-        .where((r) => r.code != null && r.code!.isNotEmpty)
-        .toList();
+    final validRacks =
+        rackList.where((r) => r.code != null && r.code!.isNotEmpty).toList();
     final codes = validRacks.map((r) => r.code!).toList();
     final validValue = selectedRack != null && codes.contains(selectedRack)
         ? selectedRack
@@ -288,7 +287,6 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
     final item = Provider.of<ReceivingProvider>(context, listen: true);
     return Scaffold(
       backgroundColor: Colors.white,
-
       body: Stack(
         children: [
           SafeArea(
@@ -310,7 +308,6 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                       ),
                     ),
                     SizedBox(height: 10.h),
-
                     SingleChildScrollView(
                       child: Form(
                         key: _formKey,
@@ -389,7 +386,6 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                   ),
                                 ),
                                 SizedBox(height: 10.h),
-
                                 Container(
                                   decoration: BoxDecoration(
                                     border: Border.all(
@@ -409,7 +405,6 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                     ),
                                   ),
                                 ),
-
                                 SizedBox(height: 20.h),
                               ],
 
@@ -526,7 +521,7 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                 child: DropdownButtonHideUnderline(
                                   child: _buildLocationDropdown(
                                     item.locationList,
-                                    item.selectedLocation,
+                                    item.selectedLocationss,
                                     (String? value) async {
                                       if (value == null) return;
                                       item.setSelectedLocation(value);

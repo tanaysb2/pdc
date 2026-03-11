@@ -11,7 +11,7 @@ import 'package:http/http.dart';
 import 'package:pdc/Modules/homepage_model.dart';
 import 'package:pdc/Modules/plant.dart';
 import 'package:pdc/Urls/url_holder_loan.dart';
-import 'package:pdc/main.dart';
+import 'package:pdc/main.dart'; 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
 
@@ -47,8 +47,8 @@ class AuthProvider with ChangeNotifier {
       request.headers.addAll(headers);
 
       StreamedResponse response = await request.send().timeout(
-        Duration(seconds: 60),
-      );
+            Duration(seconds: 60),
+          );
 
       print("${response.statusCode} statuscode");
 
@@ -131,8 +131,8 @@ class AuthProvider with ChangeNotifier {
       List<LocationClass> demoLocationList = [];
 
       StreamedResponse response = await request.send().timeout(
-        Duration(seconds: 60),
-      );
+            Duration(seconds: 60),
+          );
 
       if (response.statusCode == 200) {
         final xyz = await response.stream.bytesToString();
@@ -200,8 +200,8 @@ class AuthProvider with ChangeNotifier {
       List<PlantModal> demoPlantList = [];
 
       StreamedResponse response = await request.send().timeout(
-        Duration(seconds: 60),
-      );
+            Duration(seconds: 60),
+          );
 
       if (response.statusCode == 200) {
         final xyz = await response.stream.bytesToString();
@@ -264,8 +264,8 @@ class AuthProvider with ChangeNotifier {
     request.headers.addAll(headers);
 
     StreamedResponse response = await request.send().timeout(
-      Duration(seconds: 60),
-    );
+          Duration(seconds: 60),
+        );
 
     print("${response.statusCode} statuscode");
 
@@ -331,7 +331,7 @@ class AuthProvider with ChangeNotifier {
                   ),
                   SizedBox(height: 10.0),
                   SizedBox(
-                    width: 120.w,
+                    width: 200.w,
                     height: 70.h,
                     child: Align(
                       alignment: Alignment.center,

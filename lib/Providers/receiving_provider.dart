@@ -7,17 +7,22 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart';
 import 'package:pdc/Modules/bin_model.dart';
+import 'package:pdc/Modules/category_model.dart';
+import 'package:pdc/Modules/competitors_model.dart';
+import 'package:pdc/Modules/department_model.dart';
 import 'package:pdc/Modules/document_detail_model.dart';
 import 'package:pdc/Modules/document_modal.dart';
-import 'package:pdc/Modules/department_model.dart';
-import 'package:pdc/Modules/competitors_model.dart';
+import 'package:pdc/Modules/homepage_model.dart';
+import 'package:pdc/Modules/location_model.dart';
+import 'package:pdc/Modules/material.dart';
+import 'package:pdc/Modules/material_model.dart';
+import 'package:pdc/Modules/material_plant_model.dart';
+import 'package:pdc/Modules/plant.dart';
 import 'package:pdc/Modules/purpose_modal.dart';
 import 'package:pdc/Modules/rack_model.dart';
 import 'package:pdc/Modules/reasons_model.dart';
-import 'package:pdc/Modules/homepage_model.dart';
 import 'package:pdc/Modules/scan_module.dart';
-import 'package:pdc/Urls/url_holder_loan.dart';
-import 'package:pdc/main.dart';
+import 'package:pdc/Urls/url_holder_loan.dart'; 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
 
@@ -25,25 +30,70 @@ class ReceivingProvider with ChangeNotifier {
   final AudioPlayer _player = AudioPlayer();
 
   List<DocumentData> documents = [];
-  DocumentDetailData? documentDetail;
+  List<DocumentDetailData> documentDetail = [];
+  TextEditingController stencilIdController = TextEditingController();
   String errorMessage = "";
   List<Department> departments = [];
   List<Competitor> competitors = [];
   List<Reason> reasons = [];
+  List<PlantModal> plantList = [];
+
   List<String> locationList = [];
+  String barcodeShow = "";
+  TextEditingController manuDateController = TextEditingController();
+  String prodDate = "";
+  String matnr = "";
+  String stencilNo = "";
+  String material = "";
+  List<MaterialModal> materialList = [];
   List<Purpose> purposes = [];
+  String selectedPrefix = "";
+  String selectedMaterialss = "";
   List<Bin> binList = [];
+  String cage = "";
+  String fromLocation = "";
+  String toLocation = "";
+  String pickListNo = "";
+  String shift = "";
   final player = AudioPlayer();
   List<Rack> rackList = [];
   List<Module> modules = [];
   TextEditingController barcodeManualController = TextEditingController();
   bool showBin = false;
+  String selectedMaterial = "";
   bool showRack = false;
+
+  TextEditingController? _selectedCategory,
+      _selectedLocation,
+      _selectedMaterialPlant;
+
+  TextEditingController? get selectedLocation => _selectedLocation;
+  TextEditingController? get selectedCategory => _selectedCategory;
+
+  TextEditingController? get selectedMaterialPlant => _selectedMaterialPlant;
+
+  late BarcodeDetails _barcodeDetails = BarcodeDetails(
+    locationDetails: LocationModel(locations: []),
+    categoryDetails: CategoryModel(categories: []),
+    materialDetails: MaterialModel(materials: []),
+    materialPlantDetails: MaterialPlantModel(plants: []),
+  );
+  String materialCode = "";
+
+  BarcodeDetails get barcodeDetails => _barcodeDetails;
 
   /// Last scan response data, populated on successful [scanDocument].
   ScanModuleData? lastScanData;
 
-  // Add Receiving form state (dropdowns)
+  // late BarcodeDetails _barcodeDetails = BarcodeDetails(
+  //   locationDetails: LocationModel(locations: []),
+  //   categoryDetails: CategoryModel(categories: []),
+  //   materialDetails: MaterialModel(materials: []),
+  //   materialPlantDetails: MaterialPlantModel(plants: []),
+  // );
+  // String materialCode = "";
+  // BarcodeDetails get barcodeDetails => _barcodeDetails;
+
   String selectedType = "JK Tyre";
   String? selectedCompany;
   String? selectedPurpose;
@@ -51,7 +101,7 @@ class ReceivingProvider with ChangeNotifier {
   String? selectedDepartment;
   String? selectedBin;
   String? selectedRack;
-  String? selectedLocation;
+  String? selectedLocationss;
 
   List<String> get uniqueCompetitorNames {
     final seen = <String>{};
@@ -66,11 +116,24 @@ class ReceivingProvider with ChangeNotifier {
     if (v == "JK Tyre") {
       selectedCompany = null;
     } else {
-      selectedCompany = uniqueCompetitorNames.isNotEmpty
-          ? uniqueCompetitorNames.first
-          : null;
+      selectedCompany =
+          uniqueCompetitorNames.isNotEmpty ? uniqueCompetitorNames.first : null;
     }
     notifyListeners();
+  }
+
+  Future<BarcodeDetails> fetchMappingData(
+      BuildContext context, String location) async {
+    selectedMaterial = "";
+    selectedPrefix = "";
+
+    await fetchLocations(location);
+
+    _barcodeDetails.materialDetails.materials = [];
+
+    await fetchMaterialPlants(context);
+    notifyListeners();
+    return _barcodeDetails;
   }
 
   void setSelectedCompany(String? v) {
@@ -104,21 +167,133 @@ class ReceivingProvider with ChangeNotifier {
   }
 
   void setSelectedLocation(String? v) {
-    selectedLocation = v;
+    selectedLocationss = v;
     notifyListeners();
   }
 
-  // void resetAddReceivingForm() {
-  //   selectedType = "JK Tyre";
-  //   selectedCompany = null;
-  //   selectedPurpose = null;
-  //   selectedReason = null;
-  //   selectedDepartment = null;
-  //   selectedBin = null;
-  //   selectedRack = null;
-  //   selectedLocation = null;
-  //   notifyListeners();
-  // }
+  void onMaterialItemChanged(String newValue) {
+    selectedMaterial = newValue;
+    notifyListeners();
+  }
+
+  void onMaterialPlantChangedformanul(String idetifier) {
+    selectedPrefix = idetifier;
+    notifyListeners();
+  }
+
+  Future stencilVerficationForAddBarcode(
+      String stencilNo,
+      String material,
+      String selectMaterial,
+      String txlocation,
+      String ordType,
+      String picklistNos) async {
+    final prefs = await SharedPreferences.getInstance();
+    var _accessToken = await prefs.getString("userToken");
+
+    var _materialPlatDetail = _barcodeDetails.materialPlantDetails.plants
+        .firstWhere((plant) => plant.description == selectMaterial);
+
+    var headers = {'Authorization': 'Bearer $_accessToken'};
+
+    log("check date $stencilNo checking");
+    log("check date $material checking");
+    log("check date ${_materialPlatDetail.code} checking");
+
+    var request = Request(
+        'GET',
+        Uri.parse(
+            '${UrlHolderLoan.baseUrl}${UrlHolderLoan.stencilVerification}?stencilNo=$stencilNo&material=$material&manPlant=${_materialPlatDetail.code.trimRight()}&location=$txlocation&ordType=$ordType&picklistNo=$picklistNos'));
+
+    request.headers.addAll(headers);
+
+    StreamedResponse response =
+        await request.send().timeout(Duration(seconds: 60));
+
+    if (response.statusCode == 200) {
+      bool? checkVibrate = await Vibration.hasVibrator();
+      final xyz = await response.stream.bytesToString();
+      if (checkVibrate) Vibration.vibrate();
+      AudioPlayer().play(AssetSource('audio/sound.wav'));
+
+      final responseData = json.decode(xyz)["message"];
+      final responseDataForDate = json.decode(xyz)["ProdDt"];
+      print(responseDataForDate);
+
+      manuDateController =
+          TextEditingController(text: responseDataForDate.toString());
+
+      log("check date ${manuDateController.value.text}");
+
+      await EasyLoading.showToast(responseData.toString(),
+          maskType: EasyLoadingMaskType.black,
+          duration: Duration(milliseconds: 200),
+          dismissOnTap: true);
+
+      notifyListeners();
+    } else {
+      bool? checkVibrate = await Vibration.hasVibrator();
+      final xyz = await response.stream.bytesToString();
+      if (checkVibrate) Vibration.vibrate();
+      AudioPlayer().play(AssetSource('audio/error.wav'));
+
+      final responseData = json.decode(xyz)["message"];
+
+      EasyLoading.showToast(responseData.toString(),
+          maskType: EasyLoadingMaskType.black);
+
+      notifyListeners();
+    }
+  }
+
+  Future<bool> markAsCompleted(String picklistNo, String location,
+      String orderType, BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final txtoken = prefs.getString("userToken");
+    var headers = {'Authorization': 'Bearer $txtoken'};
+    var request = Request('POST',
+        Uri.parse('${UrlHolderLoan.baseUrl}${UrlHolderLoan.markAsCompleted}'));
+    request.body = json.encode({
+      "pickListNo": picklistNo.trimRight(),
+      "location": location.trimRight(),
+      "orderType": orderType.trimRight(),
+    });
+    request.headers.addAll(headers);
+
+    StreamedResponse response =
+        await request.send().timeout(Duration(seconds: 60));
+
+    if (response.statusCode == 200) {
+      bool? checkVibrate = await Vibration.hasVibrator();
+      final xyz = await response.stream.bytesToString();
+      if (checkVibrate!) Vibration.vibrate();
+      AudioPlayer().play(AssetSource('audio/sound.wav'));
+
+      final responseData = json.decode(xyz)["message"];
+
+      await EasyLoading.showToast(responseData.toString(),
+          maskType: EasyLoadingMaskType.black,
+          duration: Duration(milliseconds: 600),
+          dismissOnTap: true);
+
+      notifyListeners();
+
+      return true;
+    } else {
+      bool? checkVibrate = await Vibration.hasVibrator();
+      final xyz = await response.stream.bytesToString();
+      if (checkVibrate!) Vibration.vibrate();
+      AudioPlayer().play(AssetSource('audio/error.wav'));
+
+      final responseData = json.decode(xyz)["message"];
+
+      showDialogForallDialog(context, responseData.toString());
+
+      notifyListeners();
+
+      return false;
+    }
+  }
 
   /// Submits the Add Receiving form: calls [createDocument] with current dropdown values and [remark], then resets form on success.
   Future<bool> submitAddReceiving(
@@ -130,7 +305,7 @@ class ReceivingProvider with ChangeNotifier {
     final purposeCode = selectedPurpose ?? '';
     final reasonCode = selectedReason ?? '';
     final departmentCode = selectedDepartment ?? '';
-    final storageLocation = selectedLocation ?? '';
+    final storageLocation = selectedLocationss ?? '';
     final binCode = selectedBin ?? '';
     final rackCode = selectedRack ?? '';
 
@@ -168,11 +343,55 @@ class ReceivingProvider with ChangeNotifier {
     );
 
     if (result != null) {
-      await fetchDocuments(context, docType, departmentCode, location);
+      await fetchDocuments(context, docType, 'MG', location);
       if (context.mounted) Navigator.of(context).pop();
       return true;
     }
     return false;
+  }
+
+  void dateEmpty() {
+    manuDateController = TextEditingController();
+    notifyListeners();
+  }
+
+  Future getPlants(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("userToken");
+    var headers = {'Authorization': 'Bearer $token'};
+    var request = Request(
+        'GET', Uri.parse('${UrlHolderLoan.baseUrl}${UrlHolderLoan.plants}'));
+
+    request.headers.addAll(headers);
+
+    List<PlantModal> demoPlantList = [];
+
+    StreamedResponse response =
+        await request.send().timeout(Duration(seconds: 60));
+
+    if (response.statusCode == 200) {
+      final xyz = await response.stream.bytesToString();
+      final List responseData = json.decode(xyz)["plants"];
+
+      responseData.forEach((element) {
+        return demoPlantList.add(PlantModal(
+            id: element["_id"],
+            code: element["code"],
+            identifiers: element["identifier"],
+            description: element["description"]));
+      });
+      plantList = demoPlantList;
+      log('plantList: ${plantList.length} lenth');
+      notifyListeners();
+    } else {
+      bool? checkVibrate = await Vibration.hasVibrator();
+      final xyz = await response.stream.bytesToString();
+      if (checkVibrate) Vibration.vibrate();
+      AudioPlayer().play(AssetSource('audio/error.wav'));
+      final responseData = json.decode(xyz)["message"];
+      EasyLoading.showToast(responseData.toString(),
+          maskType: EasyLoadingMaskType.black);
+    }
   }
 
   /// Fetch documents from API and populate [documents] list.
@@ -198,7 +417,7 @@ class ReceivingProvider with ChangeNotifier {
     final request = Request(
       'GET',
       Uri.parse(
-        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}?documentType=$documentType&departmentCode=$departmentCode&location=$location',
+        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}?documentType=$documentType&departmentCode=MG&location=$location',
       ),
     );
 
@@ -236,57 +455,50 @@ class ReceivingProvider with ChangeNotifier {
   Future<bool> fetchDocumentDetail(
     BuildContext context,
     String documentNumber,
+    String location,
   ) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString("userToken");
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("userToken");
 
-      if (token == null || token.isEmpty) {
-        return false;
+    if (token == null || token.isEmpty) {
+      return false;
+    }
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    final request = Request(
+      'GET',
+      Uri.parse(
+        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}/$documentNumber?location=$location',
+      ),
+    );
+
+    request.headers.addAll(headers);
+
+    final response = await request.send().timeout(
+          const Duration(seconds: 60),
+        );
+
+    if (response.statusCode == 200) {
+      final body = await response.stream.bytesToString();
+      final Map<String, dynamic> jsonData = json.decode(body);
+
+      final detailResponse = DocumentDetailResponse.fromJson(jsonData);
+      documentDetail = detailResponse.data;
+      notifyListeners();
+      return true;
+    } else {
+      final body = await response.stream.bytesToString();
+
+      bool? checkVibrate = await Vibration.hasVibrator();
+      if (checkVibrate == true) {
+        Vibration.vibrate();
       }
 
-      final headers = {'Authorization': 'Bearer $token'};
+      _player.play(AssetSource('audio/error.wav'));
 
-      final request = Request(
-        'GET',
-        Uri.parse(
-          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}/$documentNumber',
-        ),
-      );
-
-      request.headers.addAll(headers);
-
-      final response = await request.send().timeout(
-        const Duration(seconds: 60),
-      );
-
-      if (response.statusCode == 200) {
-        final body = await response.stream.bytesToString();
-        final Map<String, dynamic> jsonData = json.decode(body);
-
-        final detailResponse = DocumentDetailResponse.fromJson(jsonData);
-        documentDetail = detailResponse.data;
-        notifyListeners();
-        return true;
-      } else {
-        final body = await response.stream.bytesToString();
-
-        bool? checkVibrate = await Vibration.hasVibrator();
-        if (checkVibrate == true) {
-          Vibration.vibrate();
-        }
-
-        _player.play(AssetSource('audio/error.wav'));
-
-        final message = _extractErrorMessage(body);
-        EasyLoading.showToast(message, maskType: EasyLoadingMaskType.black);
-        return false;
-      }
-    } catch (e) {
-      EasyLoading.showToast(
-        "Connectivity issue, Please try again",
-        maskType: EasyLoadingMaskType.black,
-      );
+      final message = _extractErrorMessage(body);
+      EasyLoading.showToast(message, maskType: EasyLoadingMaskType.black);
       return false;
     }
   }
@@ -315,8 +527,8 @@ class ReceivingProvider with ChangeNotifier {
       request.headers.addAll(headers);
 
       final response = await request.send().timeout(
-        const Duration(seconds: 60),
-      );
+            const Duration(seconds: 60),
+          );
 
       if (response.statusCode == 200) {
         final body = await response.stream.bytesToString();
@@ -380,8 +592,8 @@ class ReceivingProvider with ChangeNotifier {
       request.headers.addAll(headers);
 
       final response = await request.send().timeout(
-        const Duration(seconds: 60),
-      );
+            const Duration(seconds: 60),
+          );
 
       if (response.statusCode == 200) {
         final body = await response.stream.bytesToString();
@@ -441,8 +653,8 @@ class ReceivingProvider with ChangeNotifier {
       request.headers.addAll(headers);
 
       final response = await request.send().timeout(
-        const Duration(seconds: 60),
-      );
+            const Duration(seconds: 60),
+          );
 
       if (response.statusCode == 200) {
         final body = await response.stream.bytesToString();
@@ -497,8 +709,8 @@ class ReceivingProvider with ChangeNotifier {
       request.headers.addAll(headers);
 
       StreamedResponse response = await request.send().timeout(
-        Duration(seconds: 60),
-      );
+            Duration(seconds: 60),
+          );
 
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
@@ -541,8 +753,8 @@ class ReceivingProvider with ChangeNotifier {
     request.headers.addAll(headers);
 
     StreamedResponse response = await request.send().timeout(
-      Duration(seconds: 60),
-    );
+          Duration(seconds: 60),
+        );
     List<String> demoLocationList = [];
 
     if (response.statusCode == 200) {
@@ -556,9 +768,9 @@ class ReceivingProvider with ChangeNotifier {
 
       locationList = demoLocationList;
       if (locationList.isNotEmpty &&
-          (selectedLocation == null ||
-              !locationList.contains(selectedLocation))) {
-        selectedLocation = locationList.first;
+          (selectedLocationss == null ||
+              !locationList.contains(selectedLocationss))) {
+        selectedLocationss = locationList.first;
       }
 
       print("${locationList.length} lllist");
@@ -662,9 +874,8 @@ class ReceivingProvider with ChangeNotifier {
         );
       });
       rackList = demoRackList;
-      final validRacks = rackList
-          .where((r) => r.code != null && r.code!.isNotEmpty)
-          .toList();
+      final validRacks =
+          rackList.where((r) => r.code != null && r.code!.isNotEmpty).toList();
       if (validRacks.isNotEmpty &&
           (selectedRack == null ||
               !validRacks.any((r) => r.code == selectedRack))) {
@@ -735,6 +946,9 @@ class ReceivingProvider with ChangeNotifier {
     String? remark,
   }) async {
     try {
+      log(
+        "createDocument inputs: docType=$docType, competitorCode=$competitorCode, purposeCode=$purposeCode, reasonCode=$reasonCode, storageLocation=$storageLocation, binCode=$binCode, rackCode=$rackCode, departmentCode=MG, location=$location, remark=$remark",
+      );
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString("userToken");
 
@@ -752,7 +966,7 @@ class ReceivingProvider with ChangeNotifier {
       };
 
       final body = {
-        "docType": docType,
+        "documentType": docType,
         "competitorCode": competitorCode,
         "purposeCode": purposeCode,
         "reasonCode": reasonCode,
@@ -772,8 +986,8 @@ class ReceivingProvider with ChangeNotifier {
       request.headers.addAll(headers);
 
       final response = await request.send().timeout(
-        const Duration(seconds: 60),
-      );
+            const Duration(seconds: 60),
+          );
 
       log("${response.statusCode} response.statusCode");
 
@@ -833,8 +1047,8 @@ class ReceivingProvider with ChangeNotifier {
       request.headers.addAll(headers);
 
       final response = await request.send().timeout(
-        const Duration(seconds: 60),
-      );
+            const Duration(seconds: 60),
+          );
 
       if (response.statusCode == 200) {
         final body = await response.stream.bytesToString();
@@ -919,8 +1133,8 @@ class ReceivingProvider with ChangeNotifier {
       request.headers.addAll(headers);
 
       final response = await request.send().timeout(
-        const Duration(seconds: 60),
-      );
+            const Duration(seconds: 60),
+          );
 
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
@@ -968,13 +1182,140 @@ class ReceivingProvider with ChangeNotifier {
     return "Something went wrong. Please try again.";
   }
 
-  /// Unscan a document item by posting the unscan request.
-  ///
-  /// Returns the response body as [Map<String, dynamic>] if status code is 200,
-  /// otherwise returns null.
-  ///
-  /// [documentNumber] is the unique identifier for the document.
-  /// [barcode], [lineItemNo], [docType], [location], [storageLocation], [binCode], [rackCode] are request parameters.
+  Future<List<Category>?> fetchCategories(
+      String location, String manPlant) async {
+    final prefs = await SharedPreferences.getInstance();
+    var _accessToken = await prefs.getString(
+      "userToken",
+    );
+    final url =
+        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getMappingCategories}?location=$location&manfplant=$manPlant';
+    var headers = {
+      'Content-Type': 'application/json',
+      "authorization": 'Bearer $_accessToken'
+    };
+    var request = Request('GET', Uri.parse(url));
+    request.headers.addAll(headers);
+
+    StreamedResponse response =
+        await request.send().timeout(Duration(seconds: 60));
+
+    if (response.statusCode == 200) {
+      final resp = await response.stream.bytesToString();
+      CategoryModel categoryDetail = categoryModelFromJson(resp);
+      // _categoryDetails.categories = categoryDetail.categories;
+      _barcodeDetails.categoryDetails = categoryDetail;
+      _selectedCategory = TextEditingController(
+          text: _barcodeDetails.categoryDetails.categories[0].description);
+      notifyListeners();
+    } else {
+      bool? checkVibrate = await Vibration.hasVibrator();
+      final resp = await response.stream.bytesToString();
+      if (checkVibrate!) Vibration.vibrate();
+      AudioPlayer().play(AssetSource('audio/error.wav'));
+
+      final responseData = json.decode(resp)["message"];
+      EasyLoading.showToast(responseData.toString(),
+          maskType: EasyLoadingMaskType.black);
+      return null;
+    }
+    return null;
+  }
+
+  Future<void> fetchMaterials(
+      String categoryId, String manPlant, String location) async {
+    final prefs = await SharedPreferences.getInstance();
+    var _accessToken = await prefs.getString(
+      "userToken",
+    );
+    final url =
+        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getMappingMaterials}?category=${categoryId.trimRight()}&manfplant=$manPlant&location=$location';
+    var headers = {
+      'Content-Type': 'application/json',
+      "authorization": 'Bearer $_accessToken'
+    };
+    var request = Request('GET', Uri.parse(url));
+    request.headers.addAll(headers);
+
+    StreamedResponse response =
+        await request.send().timeout(Duration(seconds: 60));
+
+    if (response.statusCode == 200) {
+      final resp = await response.stream.bytesToString();
+      MaterialModel materialsDetail = materialModelFromJson(resp);
+      _barcodeDetails.materialDetails = materialsDetail;
+
+      notifyListeners();
+    } else {
+      bool? checkVibrate = await Vibration.hasVibrator();
+      final resp = await response.stream.bytesToString();
+      if (checkVibrate) Vibration.vibrate();
+      AudioPlayer().play(AssetSource('audio/error.wav'));
+
+      final responseData = json.decode(resp)["message"];
+      EasyLoading.showToast(responseData.toString(),
+          maskType: EasyLoadingMaskType.black);
+      return null;
+    }
+  }
+
+  Future<void> fetchMaterialPlants(BuildContext context) async {
+    print("objectkjasdknskjd");
+    final prefs = await SharedPreferences.getInstance();
+    var _accessToken = await prefs.getString(
+      "userToken",
+    );
+    final url = '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getMappingPlants}';
+    var headers = {
+      'Content-Type': 'application/json',
+      "authorization": 'Bearer $_accessToken'
+    };
+    var request = Request('GET', Uri.parse(url));
+    request.headers.addAll(headers);
+
+    StreamedResponse response =
+        await request.send().timeout(Duration(seconds: 60));
+
+    if (response.statusCode == 200) {
+      final resp = await response.stream.bytesToString();
+      MaterialPlantModel materialPlantsDetail =
+          materialPlantModelFromJson(resp);
+      _barcodeDetails.materialPlantDetails = materialPlantsDetail;
+      log("${_barcodeDetails.materialPlantDetails.plants.length} lengthhhh");
+      // _selectedPrefix =
+      //     _barcodeDetails.materialPlantDetails.plants[0].identifiers;
+      notifyListeners();
+    } else {
+      bool? checkVibrate = await Vibration.hasVibrator();
+      final resp = await response.stream.bytesToString();
+      if (checkVibrate) Vibration.vibrate();
+      AudioPlayer().play(AssetSource('audio/error.wav'));
+
+      final responseData = json.decode(resp)["message"];
+      EasyLoading.showToast(responseData.toString(),
+          maskType: EasyLoadingMaskType.black);
+      return null;
+    }
+  }
+
+  Future onCategoryChanged(
+      String? newValue, String location, String manPlant) async {
+    // _isCategoryLoading = true;
+    selectedMaterial = "";
+    log("${newValue} newvalll");
+    notifyListeners();
+    _selectedCategory = TextEditingController(text: newValue);
+
+    var _newSelectedCategory = _barcodeDetails.categoryDetails.categories
+        .firstWhere((category) =>
+            category.description == _selectedCategory!.value.text);
+    _barcodeDetails.materialDetails.materials.clear();
+    log(_newSelectedCategory.code);
+    await fetchMaterials(_newSelectedCategory.code, manPlant, location);
+
+    notifyListeners();
+  }
+
   Future<Map<String, dynamic>?> unscanDocument({
     required String documentNumber,
     required String barcode,
@@ -1041,4 +1382,163 @@ class ReceivingProvider with ChangeNotifier {
       return null;
     }
   }
+
+  Future<bool> scanBarcode(
+      String barcode,
+      String pickListNos,
+      String docType,
+      String location,
+      String storageLocation,
+      String txxdeviceId,
+      BuildContext context,
+      {bool removeBarcode = false}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final txtoken = prefs.getString("userToken");
+    var headers = {'Authorization': 'Bearer $txtoken'};
+    log('${UrlHolderLoan.baseUrl}${UrlHolderLoan.scanBarcode}?barcode=${barcode.trimRight()}&pickListNo=${pickListNos.trimRight()}&docType=${docType.trimRight()}&ordType=TT&location=$location&fromstrg=&deviceId=');
+    var request = Request(
+        removeBarcode ? 'DELETE' : 'GET',
+        Uri.parse(
+            '${UrlHolderLoan.baseUrl}${UrlHolderLoan.scanBarcode}?barcode=${barcode.trimRight()}&pickListNo=${pickListNos.trimRight()}&docType=${docType.trimRight()}&ordType=TT&location=$location&fromstrg=&deviceId=&binCd=&rackCd='));
+
+    request.headers.addAll(headers);
+
+    StreamedResponse response =
+        await request.send().timeout(Duration(seconds: 60));
+
+    if (response.statusCode == 200) {
+      bool? checkVibrate = await Vibration.hasVibrator();
+      final xyz = await response.stream.bytesToString();
+      if (checkVibrate!) Vibration.vibrate();
+      AudioPlayer().play(AssetSource('audio/sound.wav'));
+      final responseDataToShow = json.decode(xyz);
+
+      log("$responseDataToShow testing");
+
+      barcodeShow = responseDataToShow["data"]["Barcode"] ?? "";
+      pickListNo = responseDataToShow["data"]["PickListNo"] ?? "";
+      prodDate = responseDataToShow["data"]["ProdDate"] ?? "";
+      stencilNo = responseDataToShow["data"]["StencilBarcode"] ?? "";
+      material = responseDataToShow["data"]["Maktx"] ?? "";
+      matnr = responseDataToShow["data"]["Matnr"] ?? "";
+
+      final responseData = json.decode(xyz)["message"] ?? "";
+
+      errorMessage = responseData.toString();
+
+      // EasyLoading.showToast(responseData.toString(),
+      //     maskType: EasyLoadingMaskType.black);
+
+      notifyListeners();
+      return true;
+    } else {
+      bool? checkVibrate = await Vibration.hasVibrator();
+      final xyz = await response.stream.bytesToString();
+      final responseDataToShow = json.decode(xyz);
+
+      log("$responseDataToShow testing fail");
+
+      if (checkVibrate) Vibration.vibrate();
+      player.play(AssetSource('audio/sirenerror.wav'));
+      player.setReleaseMode(ReleaseMode.loop);
+
+      showDialogForall(context, json.decode(xyz)["message"].toString());
+
+      final responseData = json.decode(xyz)["message"];
+      errorMessage = responseData.toString();
+
+      // final responseDataForStatus =
+      //     json.decode(xyz)["data"]["UID_Status"]["Status"] ?? "";
+      // print("$responseDataForStatus checkingtesting");
+
+      barcodeShow = responseDataToShow["data"]?["Barcode"] ?? "";
+      prodDate = responseDataToShow["data"]?["ProdDate"] ?? "";
+      stencilNo = responseDataToShow["data"]?["StencilBarcode"] ?? "";
+      material = responseDataToShow["data"]?["Maktx"] ?? "";
+      matnr = responseDataToShow["data"]?["Matnr"] ?? "";
+
+      // EasyLoading.showToast(responseData.toString(),
+      //     maskType: EasyLoadingMaskType.black);
+
+      notifyListeners();
+
+      return false;
+    }
+  }
+
+  Future showDialogForall(BuildContext context, String text) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 20.0.w, vertical: 20.h),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'ERROR',
+                        style: TextStyle(
+                            fontSize: 38.sp, fontWeight: FontWeight.w700),
+                      ),
+                      SizedBox(width: 8.w),
+                      Icon(Icons.error, color: Colors.red, size: 38.r)
+                    ],
+                  ),
+                  SizedBox(height: 10.0),
+                  Text(
+                    text,
+                    style:
+                        TextStyle(fontSize: 30.sp, fontWeight: FontWeight.w600),
+                  ),
+                  SizedBox(height: 10.0),
+                  SizedBox(
+                    width: 120.w,
+                    height: 70.h,
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          player.stop();
+                          Navigator.of(context).pop();
+                        },
+                        child: Text(
+                          'OK',
+                          style: TextStyle(
+                              fontSize: 28.sp, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class BarcodeDetails {
+  late LocationModel locationDetails;
+  late CategoryModel categoryDetails;
+  late MaterialModel materialDetails;
+  late MaterialPlantModel materialPlantDetails;
+
+  BarcodeDetails(
+      {required this.locationDetails,
+      required this.categoryDetails,
+      required this.materialDetails,
+      required this.materialPlantDetails});
 }

@@ -2,25 +2,30 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:el_tooltip/el_tooltip.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_datawedge/flutter_datawedge.dart';
+import 'package:flutter_datawedge/flutter_datawedge.dart'; 
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:pdc/Modules/category_model.dart';
+import 'package:pdc/Modules/document_detail_model.dart';
+import 'package:pdc/Modules/document_modal.dart';
 import 'package:pdc/Modules/plant.dart';
 import 'package:pdc/Providers/receiving_provider.dart';
 import 'package:pdc/Resuable%20components/app_bar.dart';
+import 'package:pdc/Resuable%20components/barcode_info.dart';
 import 'package:pdc/Resuable%20components/custom_lablel_dropdown.dart';
-import 'package:pdc/Resuable%20components/custom_searchbox.dart';
+import 'package:pdc/Resuable%20components/custom_searchable_dropdown.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
 import 'package:pdc/Resuable%20components/text_field.dart';
+import 'package:pdc/Screens/Receiving_screen.dart/receiving_screen.dart'; 
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:vibration/vibration.dart';
 
 // ignore: must_be_immutable
 class ReceivingScanScreen extends StatefulWidget {
+  DocumentData document;
   String location;
   String erName;
   String pickListnos;
@@ -35,6 +40,7 @@ class ReceivingScanScreen extends StatefulWidget {
   String userId;
   ReceivingScanScreen({
     super.key,
+    required this.document,
     required this.location,
     required this.pickListnos,
     required this.invoiceNo,
@@ -99,905 +105,464 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
   ///// End fields
   ///
 
-
-
-  // Future showPlantBox(BuildContext context) async {
-  //   isTrue = true; 
-  //   setState(() {}); 
-  //   await showModalBottomSheet<void>(
-  //     isScrollControlled: true,
-  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
-  //     backgroundColor: Colors.white,
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       final item = Provider.of<DispatchProvider>(context, listen: true);
-  //       final itemForPlant = Provider.of<AuthProvider>(context, listen: true);
-  //       final itemSelect = Provider.of<BarcodeDetailProvider>(
-  //         context,
-  //         listen: true,
-  //       );
-  //       return StatefulBuilder(
-  //         builder: (BuildContext context, StateSetter setState11) {
-  //           return Stack(
-  //             children: [
-  //               Padding(
-  //                 padding: EdgeInsets.only(
-  //                   bottom: MediaQuery.of(context).viewInsets.bottom,
-  //                 ),
-  //                 child: Container(
-  //                   height: 1050.h,
-  //                   padding: EdgeInsets.symmetric(horizontal: 30.w),
-  //                   child: SingleChildScrollView(
-  //                     child: Column(
-  //                       mainAxisAlignment: MainAxisAlignment.start,
-  //                       children: <Widget>[
-  //                         SizedBox(height: 40.h),
-  //                         InkWell(
-  //                           onTap: () {
-  //                             // tempScan();
-  //                           },
-  //                           child: Text(
-  //                             "Add Barcode",
-  //                             style: textFieldStyle(
-  //                               color: Color.fromARGB(255, 1, 77, 138),
-  //                               weight: FontWeight.w700,
-  //                               fontSize: 43.sp,
-  //                             ),
-  //                           ),
-  //                         ),
-  //                         SizedBox(height: 40.h),
-  //                         Container(
-  //                           margin: EdgeInsets.only(left: 8.w),
-  //                           child: CustomTextField(
-  //                             controller: item.barcodeManualController,
-  //                             isEnabled: false,
-  //                             labelText: "Enter Barcode",
-  //                             margin: false,
-  //                             checking: true,
-  //                           ),
-  //                         ),
-  //                         SizedBox(height: 30.h),
-  //                         Container(
-  //                           margin: EdgeInsets.only(left: 10.w, bottom: 20.h),
-  //                           child: DropdownInput(
-  //                             isMargin: false,
-  //                             controller: plantController,
-  //                             labelText: "Select Manufacturing Plant",
- //                             // value: consajda.value.text,
-  //                             isEnabled: true,
-  //                             inputFieldWidth: double.infinity,
-  //                             items: itemForPlant.plantList.map((
-  //                               PlantModal value,
-  //                             ) {
-  //                               return DropdownMenuItem<String>(
-  //                                 value: value.description,
-  //                                 child: Text(value.description),
-  //                               );
-  //                             }).toList(),
-  //                             onChanged: (value) {
-  //                               print(value);
-  //                               // print("$value vauejnka");
- //                               PlantModal cyz = itemForPlant.plantList
-  //                                   .firstWhere(
-  //                                     (element) => element.description == value,
-  //                                   );
-  //                               print("${cyz.code} indeftid");
- //                               manPlantCode = cyz.code;
- //                               itemSelect.onMaterialPlantChangedformanul(
-  //                                 cyz.code,
-  //                               );
-  //                               plantController = TextEditingController(
-  //                                 text: cyz.description,
-  //                               );
-  //                               setState(() {});
-  //                             },
-  //                           ),
-  //                         ),
-  //                         Container(
-  //                           alignment: Alignment.centerLeft,
-  //                           margin: EdgeInsets.only(left: 14.w, bottom: 10.h),
-  //                           child: Text(
-  //                             "Select Material",
-  //                             style: TextStyle(
-  //                               color: Colors.black,
-  //                               fontFamily: "NotoSans",
-  //                               fontSize: 30.sp,
-  //                               fontWeight: FontWeight.w600,
-  //                             ),
-  //                           ),
-  //                         ),
-  //                         Container(
-  //                           margin: EdgeInsets.symmetric(horizontal: 8.w),
-  //                           child: SearchableDropDownOnlyDropdown(
-  //                             labelName: "Select Item",
-  //                             dropDownItems: item.materialList
-  //                                 .map((material) => material.description)
-  //                                 .toList(),
-  //                             selectedItem: materialManualController.value.text,
-  //                             onDropDownItemSelected: (p0) {
-  //                               print(p0);
-  //                               materialManualController =
-  //                                   TextEditingController(text: p0.toString());
-  //                               setState(() {});
- //                               var _materialDetail = item.materialList
-  //                                   .firstWhere(
-  //                                     (material) => material.description == p0,
-  //                                   );
-  //                               materialCode = _materialDetail.code;
-  //                               setState(() {});
-  //                             },
-  //                           ),
-  //                         ),
-  //                         SizedBox(height: 40.h),
-  //                         Container(
-  //                           margin: EdgeInsets.symmetric(horizontal: 10.w),
-  //                           child: Row(
-  //                             children: [
-  //                               Expanded(
-  //                                 child: CustomTextField(
-  //                                   margin: false,
-  //                                   isEnabled:
-  //                                       materialManualController
-  //                                               .value
-  //                                               .text
-  //                                               .isEmpty &&
-  //                                           plantController.value.text.isEmpty
-  //                                       ? false
-  //                                       : true,
-  //                                   focusNode: stencilFocusNode,
-  //                                   maxlength: true,
-  //                                   onChanged: (p0) {
-  //                                     itemSelect.dateEmpty();
-  //                                   },
-  //                                   // onFieldSubmitted: (p0) async {
-  //                                   //   if (stencilManualController
-  //                                   //       .value.text.isNotEmpty) {
-  //                                   //     setState(() {
-  //                                   //       _isLoading = true;
-  //                                   //     });
-  //                                   //     await itemSelect
-  //                                   //         .stencilVerficationForAddBarcode(
-  //                                   //             p0,
-  //                                   //             materialCode,
-  //                                   //             plantController.value.text);
-  //                                   //     setState(() {
-  //                                   //       _isLoading = false;
-  //                                   //     });
-  //                                   //   }
-  //                                   // },
-  //                                   // prefix: itemSelect.selectedPrefix!,
-  //                                   labelText: "Enter Stencil ID",
-  //                                   controller: stencilManualController,
-  //                                   validator: (value) {
-  //                                     // String finalStringsss = value!.substring(
-  //                                     //     (value.length - 4).clamp(0, value.length));
-  //                                     // print("$finalStringsss finalString");
-  //                                     if (value!.isEmpty) {
-  //                                       return "Stencil ID can't be empty";
-  //                                     } else {
-  //                                       return null;
-  //                                     }
-  //                                   },
-  //                                 ),
-  //                               ),
-  //                               SizedBox(width: 5.w),
-  //                               if (itemSelect
-  //                                   .manuDateController
-  //                                   .value
-  //                                   .text
-  //                                   .isNotEmpty)
-  //                                 Container(
-  //                                   margin: EdgeInsets.only(bottom: 35.h),
-  //                                   child: Icon(
-  //                                     Icons.check_circle,
-  //                                     color: Colors.blue,
-  //                                   ),
-  //                                 ),
-  //                             ],
-  //                           ),
-  //                         ),
-  //                         SizedBox(height: 15.h),
-  //                         CustomTextField(
-  //                           controller: itemSelect.manuDateController,
-  //                           labelText: "Select Mfg Date",
-  //                           isReadOnly: true,
-  //                         ),
-  //                         SizedBox(height: 10.h),
-  //                         Container(
-  //                           height: 90.h,
-  //                           margin: EdgeInsets.symmetric(horizontal: 10.w),
-  //                           width: double.infinity,
-  //                           child: ElevatedButton(
-  //                             style: ElevatedButton.styleFrom(
-  //                               backgroundColor: Color.fromARGB(
-  //                                 255,
-  //                                 1,
-  //                                 77,
-  //                                 138,
-  //                               ),
-  //                               shape: RoundedRectangleBorder(
-  //                                 borderRadius: BorderRadius.circular(
-  //                                   12,
-  //                                 ), // <-- Radius
-  //                               ),
-  //                             ),
-  //                             onPressed: () async {
-  //                               setState11(() {
-  //                                 _isLoadingInside = true;
-  //                               });
-  //                               print(itemSelect.manuDateController.value.text);
- //                               bool check = await item.submitBarcode(
-  //                                 item.barcodeManualController.value.text,
-  //                                 materialManualController.value.text,
-  //                                 stencilManualController.value.text,
-  //                                 itemSelect.manuDateController.value.text,
-  //                                 manPlantCode,
-  //                                 widget.location,
-  //                                 widget.pickListnos,
-  //                               );
- //                               if (check) {
-  //                                 reload = true;
-  //                                 setState(() {});
-  //                                 setState11(() {
-  //                                   _isLoadingInside = false;
-  //                                 });
-  //                                 Navigator.of(context).pop();
-  //                               } else {
-  //                                 setState(() {
-  //                                   reload = false;
-  //                                 });
-  //                                 setState11(() {
-  //                                   _isLoadingInside = false;
-  //                                 });
-  //                               }
-  //                             },
-  //                             child: Text(
-  //                               "Submit",
-  //                               style: textFieldStyle(
-  //                                 color: Colors.white,
-  //                                 weight: FontWeight.w700,
-  //                                 fontSize: 34.sp,
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ),
-  //               if (_isLoadingInside)
-  //                 Center(child: LoaderTransparent(color: Colors.white)),
-  //             ],
-  //           );
-  //         },
-  //       );
-  //     },
-  //   ).whenComplete(() {
-  //     materialManualController = TextEditingController();
-  //     stencilManualController = TextEditingController();
-  //     prodDateManualController = TextEditingController();
-  //     manufacturingDateManualController = TextEditingController();
-  //     Provider.of<BarcodeDetailProvider>(
-  //       context,
-  //       listen: false,
-  //     ).manuDateController = TextEditingController();
- //     Provider.of<DispatchProvider>(
-  //       context,
-  //       listen: false,
-  //     ).barcodeManualController = TextEditingController();
- //     isTrue = false;
- //     setState(() {});
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   // reload = true;
+  //   setState(() {
+  //     _isLoading = true;
   //   });
-  // }
 
+  //   log("${widget.document.documentNumber}");
+  //   log("${widget.type}");
+  //   log("${widget.location}");
 
+  //   checkSuccess = 0;
 
-  // Future changeInfo(BuildContext context) async {
-  //   isTrue = true;
-  //   int tab = 1;
-  //   setState(() {});
-  //   await showModalBottomSheet<void>(
-  //     isScrollControlled: true,
-  //     shape: RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.circular(20.0),
-  //     ),
-  //     backgroundColor: Colors.white,
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       final item = Provider.of<DispatchProvider>(context, listen: true);
-  //       final itemForPlant = Provider.of<AuthProvider>(context, listen: true);
-  //       final itemForQaCage =
-  //           Provider.of<QacageProvider>(context, listen: true);
-  //       final itemSelect =
-  //           Provider.of<BarcodeDetailProvider>(context, listen: true);
-  //       return StatefulBuilder(
-  //           builder: (BuildContext context, StateSetter setState11) {
-  //         return Stack(
-  //           children: [
-  //             Padding(
-  //               padding: EdgeInsets.only(
-  //                   bottom: MediaQuery.of(context).viewInsets.bottom),
-  //               child: Container(
-  //                 height: 1020.h,
-  //                 padding: EdgeInsets.symmetric(horizontal: 30.w),
-  //                 child: SingleChildScrollView(
-  //                   child: Column(
-  //                     mainAxisAlignment: MainAxisAlignment.start,
-  //                     children: <Widget>[
-  //                       SizedBox(height: 40.h),
-  //                       Text("Change Info",
-  //                           style: textFieldStyle(
-  //                               color: Color.fromARGB(255, 1, 77, 138),
-  //                               weight: FontWeight.w700,
-  //                               fontSize: 38.sp)),
-  //                       SizedBox(height: 30.h),
-  //                       Container(
-  //                           margin: EdgeInsets.only(left: 10.w, bottom: 20.h),
-  //                           child: BarcodeInfo(
-  //                               header: "Barcode", info: item.barcodeShow)),
-  //                       Container(
-  //                           margin: EdgeInsets.only(left: 10.w, bottom: 20.h),
-  //                           child: BarcodeInfo(
-  //                               header: "Mfg Date", info: item.prodDate)),
-  //                       Container(
-  //                           margin: EdgeInsets.only(left: 10.w, bottom: 20.h),
-  //                           child: BarcodeInfo(
-  //                               header: "Stencil No", info: item.stencilNo)),
-  //                       Container(
-  //                           margin: EdgeInsets.only(left: 10.w, bottom: 20.h),
-  //                           child: BarcodeInfo(
-  //                               header: "Material", info: item.material)),
-  //                       Row(
-  //                         crossAxisAlignment: CrossAxisAlignment.center,
-  //                         mainAxisAlignment: MainAxisAlignment.center,
-  //                         children: [
-  //                           Container(
-  //                             child: Transform.scale(
-  //                               scale: 24.0 /
-  //                                   24.0, // Adjust the scale factor to change the radio button's size
-  //                               child: Radio(
-  //                                 value: 1,
-  //                                 groupValue: tab,
-  //                                 onChanged: (value) {
-  //                                   tab = value!;
-  //                                   setState11(() {});
-  //                                 },
-  //                               ),
-  //                             ),
-  //                           ),
-  //                           // Radio(
-  //                           //   value: 1,
-  //                           //   groupValue: tab,
-  //                           //   onChanged: (value) {
-  //                           //     tab = value!;
-  //                           //     setState(() {});
-  //                           //   },
-  //                           // ),
-  //                           Text("Item Change",
-  //                               style: textFieldStyle(
-  //                                   color: Color.fromARGB(255, 1, 77, 138),
-  //                                   fontSize: 28.sp,
-  //                                   weight: FontWeight.w700)),
-  //                           SizedBox(width: 20.w),
-  //                           Container(
-  //                             child: Radio(
-  //                               value: 0,
-  //                               groupValue: tab,
-  //                               onChanged: (value) {
-  //                                 tab = value!;
-  //                                 setState11(() {});
-  //                               },
-  //                             ),
-  //                           ),
-  //                           Text("Stencil Change",
-  //                               style: textFieldStyle(
-  //                                   color: Color.fromARGB(255, 1, 77, 138),
-  //                                   fontSize: 28.sp,
-  //                                   weight: FontWeight.w700)),
-  //                         ],
-  //                       ),
-  //                       //// Item change
-  //                       if (tab == 1)
-  //                         Container(
-  //                           margin: EdgeInsets.only(top: 40.h),
-  //                           child: Column(
-  //                             children: [
-  //                               Container(
-  //                                 alignment: Alignment.centerLeft,
-  //                                 margin:
-  //                                     EdgeInsets.only(left: 14.w, bottom: 10.h),
-  //                                 child: Text(
-  //                                   "Select Material",
-  //                                   style: TextStyle(
-  //                                     color: Colors.black,
-  //                                     fontFamily: "NotoSans",
-  //                                     fontSize: 30.sp,
-  //                                     fontWeight: FontWeight.w600,
-  //                                   ),
-  //                                 ),
-  //                               ),
-  //                               Container(
-  //                                 margin: EdgeInsets.symmetric(horizontal: 8.w),
-  //                                 child: SearchableDropDownOnlyDropdown(
-  //                                   labelName: "Select Item",
-  //                                   dropDownItems: item.materialList
-  //                                       .map((material) => material.description)
-  //                                       .toList(),
-  //                                   selectedItem:
-  //                                       materialManualController.value.text,
-  //                                   onDropDownItemSelected: (p0) {
-  //                                     print(p0);
-  //                                     materialManualController =
-  //                                         TextEditingController(
-  //                                             text: p0.toString());
-  //                                     setState(() {});
-  //                                     var _materialDetail = item.materialList
-  //                                         .firstWhere((material) =>
-  //                                             material.description == p0);
-  //                                     materialDetail = _materialDetail;
-  //                                     setState(() {});
-  //                                   },
-  //                                 ),
-  //                               ),
-  //                             ],
-  //                           ),
-  //                         ),
-  //                       if (tab == 0)
-  //                         //// Stencil change
-  //                         Container(
-  //                           margin: EdgeInsets.only(top: 40.h),
-  //                           child: SingleChildScrollView(
-  //                             child: Column(
-  //                               children: [
-  //                                 Container(
-  //                                   margin: EdgeInsets.only(
-  //                                       left: 10.w, bottom: 20.h),
-  //                                   child: DropdownInput(
-  //                                     isMargin: false,
-  //                                     controller: plantController,
-  //                                     labelText: "Select Manufacturing Plant",
-  //                                     // value: consajda.value.text,
-  //                                     isEnabled: true,
-  //                                     inputFieldWidth: double.infinity,
-  //                                     items: itemForPlant.plantList
-  //                                         .map((PlantModal value) {
-  //                                       return DropdownMenuItem<String>(
-  //                                         value: value.description,
-  //                                         child: Text(value.description),
-  //                                       );
-  //                                     }).toList(),
-  //                                     onChanged: (value) {
-  //                                       print(value);
-  //                                       // print("$value vauejnka");
-  //                                       PlantModal cyz = itemForPlant.plantList
-  //                                           .firstWhere((element) =>
-  //                                               element.description == value);
-  //                                       print("${cyz.code} indeftid");
-  //                                       manPlantCode = cyz.code;
-  //                                       itemSelect
-  //                                           .onMaterialPlantChangedformanul(
-  //                                               cyz.code);
-  //                                       plantController = TextEditingController(
-  //                                           text: cyz.description);
-  //                                       setState(() {});
-  //                                     },
-  //                                   ),
-  //                                 ),
-  //                                 Container(
-  //                                   margin: EdgeInsets.only(
-  //                                       left: 10.w, bottom: 20.h),
-  //                                   child: Row(
-  //                                     children: [
-  //                                       Expanded(
-  //                                         child: CustomTextField(
-  //                                           margin: false,
-  //                                           isEnabled: plantController
-  //                                                   .value.text.isEmpty
-  //                                               ? false
-  //                                               : true,
-  //                                           focusNode: stencilFocusNode,
-  //                                           maxlength: true,
-  //                                           onChanged: (p0) {
-  //                                             itemSelect.dateEmpty();
-  //                                             materialCode = item.matnr;
-  //                                             print("$materialCode dholna");
-  //                                             setState(() {});
-  //                                           },
-  //                                           labelText: "Enter Stencil ID",
-  //                                           controller: stencilManualController,
-  //                                           validator: (value) {
-  //                                             // String finalStringsss = value!.substring(
-  //                                             //     (value.length - 4).clamp(0, value.length));
-  //                                             // print("$finalStringsss finalString");
-  //                                             if (value!.isEmpty) {
-  //                                               return "Stencil ID can't be empty";
-  //                                             } else {
-  //                                               return null;
-  //                                             }
-  //                                           },
-  //                                         ),
-  //                                       ),
-  //                                       SizedBox(width: 5.w),
-  //                                       if (itemSelect.manuDateController.value
-  //                                           .text.isNotEmpty)
-  //                                         Container(
-  //                                             margin:
-  //                                                 EdgeInsets.only(bottom: 35.h),
-  //                                             child: Icon(Icons.check_circle,
-  //                                                 color: Colors.blue))
-  //                                     ],
-  //                                   ),
-  //                                 ),
-  //                                 SizedBox(height: 15.h),
-  //                               ],
-  //                             ),
-  //                           ),
-  //                         ),
-  //                       SizedBox(height: 10.h),
-  //                       Container(
-  //                         height: 90.h,
-  //                         margin: EdgeInsets.symmetric(
-  //                             horizontal: 10.w, vertical: 20.h),
-  //                         width: double.infinity,
-  //                         child: ElevatedButton(
-  //                             style: ElevatedButton.styleFrom(
-  //                               backgroundColor:
-  //                                   Color.fromARGB(255, 1, 77, 138),
-  //                               shape: RoundedRectangleBorder(
-  //                                 borderRadius:
-  //                                     BorderRadius.circular(12), // <-- Radius
-  //                               ),
-  //                             ),
-  //                             onPressed: () async {
-  //                               if (tab == 1) {
-  //                                 _isLoading = true;
-  //                                 _isLoadingInside = true;
-  //                                 setState11(() {});
-  //                                 bool check =
-  //                                     await itemForQaCage.changeInfoSubmit(
-  //                                   item.barcodeShow,
-  //                                   widget.pickListnos,
-  //                                   materialDetail!.lineItemNo,
-  //                                   materialDetail!.code,
-  //                                   materialDetail!.description,
-  //                                   "",
-  //                                   "",
-  //                                   widget.location,
-  //                                   widget.ordType,
-  //                                   '',
-  //                                   "M",
-  //                                 );
-  //                                 if (check) {
-  //                                   _isLoading = false;
-  //                                   _isLoadingInside = false;
-  //                                   setState11(() {});
-  //                                   materialManualController =
-  //                                       TextEditingController();
-  //                                   stencilManualController =
-  //                                       TextEditingController();
-  //                                   prodDateManualController =
-  //                                       TextEditingController();
-  //                                   materialCode = "";
-  //                                   manufacturingDateManualController =
-  //                                       TextEditingController();
-  //                                   Provider.of<BarcodeDetailProvider>(context,
-  //                                               listen: false)
-  //                                           .manuDateController =
-  //                                       TextEditingController();
-  //                                   Provider.of<DispatchProvider>(context,
-  //                                               listen: false)
-  //                                           .barcodeManualController =
-  //                                       TextEditingController();
-  //                                   setState11(() {});
-  //                                   Navigator.pop(context);
-  //                                 } else {
-  //                                   _isLoading = false;
-  //                                   _isLoadingInside = false;
-  //                                   setState11(() {});
-  //                                 }
-  //                               } else {
-  //                                 _isLoading = true;
-  //                                 _isLoadingInside = true;
-  //                                 setState11(() {});
-  //                                 bool check =
-  //                                     await itemForQaCage.changeInfoSubmit(
-  //                                   item.barcodeShow,
-  //                                   widget.pickListnos,
-  //                                   "",
-  //                                   "",
-  //                                   "",
-  //                                   itemSelect.manuDateController.value.text,
-  //                                   stencilManualController.value.text,
-  //                                   widget.location,
-  //                                   widget.ordType,
-  //                                   '',
-  //                                   "S",
-  //                                 );
-  //                                 if (check) {
-  //                                   _isLoading = false;
-  //                                   _isLoadingInside = false;
-  //                                   setState11(() {});
-  //                                   materialManualController =
-  //                                       TextEditingController();
-  //                                   stencilManualController =
-  //                                       TextEditingController();
-  //                                   prodDateManualController =
-  //                                       TextEditingController();
-  //                                   materialCode = "";
-  //                                   manufacturingDateManualController =
-  //                                       TextEditingController();
-  //                                   Provider.of<BarcodeDetailProvider>(context,
-  //                                               listen: false)
-  //                                           .manuDateController =
-  //                                       TextEditingController();
-  //                                   Provider.of<DispatchProvider>(context,
-  //                                               listen: false)
-  //                                           .barcodeManualController =
-  //                                       TextEditingController();
-  //                                   ;
-  //                                   setState(() {});
-  //                                   Navigator.pop(context);
-  //                                 } else {
-  //                                   _isLoading = false;
-  //                                   _isLoadingInside = false;
-  //                                   setState11(() {});
-  //                                 }
-  //                               }
-  //                               await item.getSingleDispatch(
-  //                                   widget.location,
-  //                                   widget.pickListnos,
-  //                                   widget.type != "COMPLETE DISPATCH LIST"
-  //                                       ? ""
-  //                                       : "C");
-  //                             },
-  //                             child: Text("Submit",
-  //                                 style: textFieldStyle(
-  //                                     color: Colors.white,
-  //                                     weight: FontWeight.w700,
-  //                                     fontSize: 34.sp))),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-  //               ),
-  //             ),
-  //             if (_isLoadingInside)
-  //               Center(
-  //                 child: LoaderTransparent(color: Colors.white),
-  //               ),
-  //           ],
+  //   // _barcodeDetailProvider =
+  //   //     Provider.of<BarcodeDetailProvider>(context, listen: false);
+  //   // barcodeDetails = _barcodeDetailProvider.barcodeDetails;
+
+  //   Provider.of<ReceivingProvider>(context, listen: false).getPlants(context);
+
+  //   stencilFocusNode.addListener(() {
+  //     log("$materialCode tanaysingh");
+  //     log("${stencilManualController.value.text} tanaysingh222");
+  //     log("${plantController.value.text} tanaysingh333");
+  //     if (stencilManualController.value.text.isNotEmpty) {
+  //       if (!stencilFocusNode.hasFocus) {
+  //         setState(() {
+  //           _isLoading = true;
+  //         });
+  //         Provider.of<ReceivingProvider>(context, listen: false)
+  //             .stencilVerficationForAddBarcode(
+  //           stencilManualController.value.text,
+  //           materialCode,
+  //           plantController.value.text,
+  //           widget.location,
+  //           "CG",
+  //           widget.pickListnos,
   //         );
-  //       });
-  //     },
-  //   ).whenComplete(() {
-  //     materialManualController = TextEditingController();
-  //     stencilManualController = TextEditingController();
-  //     prodDateManualController = TextEditingController();
-  //     manufacturingDateManualController = TextEditingController();
-  //     Provider.of<BarcodeDetailProvider>(context, listen: false)
-  //         .manuDateController = TextEditingController();
-  //     Provider.of<DispatchProvider>(context, listen: false)
-  //         .barcodeManualController = TextEditingController();
-  //     ;
-  //     isTrue = false;
-  //     setState(() {});
+  //         setState(() {
+  //           _isLoading = false;
+  //         });
+  //       }
+  //     }
+  //   });
+
+  //   Provider.of<ReceivingProvider>(context, listen: false)
+  //       .fetchDocumentDetail(
+  //           context, widget.document.documentNumber, widget.location)
+  //       .then((value) {
+  //     initScannerResult = initScanner();
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
   //   });
   // }
-
-
 
   @override
   void initState() {
     super.initState();
-    // reload = true;
-    // setState(() {
-    //   _isLoading = true;
-    // });
-    // final item = Provider.of<DispatchProvider>(context, listen: false);
+    setState(() {
+      _isLoading = true;
+    });
 
-    // Provider.of<DispatchProvider>(context, listen: false).showChangeInfo =
-    //     false;
+    log("${widget.document.documentNumber}");
+    log("${widget.type}");
+    log("${widget.location}");
 
-    // log("${widget.erName} dsadas 11");
+    checkSuccess = 0;
 
-    // // if (widget.erName == "U") {
-    // // } else if (widget.erName == "E") {}
-    // // setState(() {});
+    // _barcodeDetailProvider =
+    //     Provider.of<BarcodeDetailProvider>(context, listen: false);
+    // barcodeDetails = _barcodeDetailProvider.barcodeDetails;
 
-    // Provider.of<DispatchProvider>(context, listen: false).barcodeShow = "";
-    // Provider.of<DispatchProvider>(context, listen: false).prodDate = "";
-    // Provider.of<DispatchProvider>(context, listen: false).stencilNo = "";
-    // Provider.of<DispatchProvider>(context, listen: false).material = "";
+    stencilFocusNode.addListener(() {
+      log("stencil 1");
+      if (Provider.of<ReceivingProvider>(context, listen: false)
+          .stencilIdController
+          .value
+          .text
+          .isNotEmpty) {
+        if (!stencilFocusNode.hasFocus) {
+          log("stencil 2");
+          setState(() {
+            _isLoading = true;
+          });
+          log("stencil 3");
+          Provider.of<ReceivingProvider>(context, listen: false)
+              .stencilVerficationForAddBarcode(
+                  "${Provider.of<ReceivingProvider>(context, listen: false).stencilIdController.value.text}",
+                  materialCode,
+                  plantController.value.text,
+                  widget.location,
+                  "TT",
+                  widget.document.documentNumber);
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    });
 
-    // item.barcodeManualController = TextEditingController();
-    // Provider.of<BarcodeDetailProvider>(
-    //   context,
-    //   listen: false,
-    // ).manuDateController = TextEditingController();
+    Provider.of<ReceivingProvider>(context, listen: false)
+        .fetchDocumentDetail(
+            context, widget.document.documentNumber, widget.location)
+        .then((value) {
+      Provider.of<ReceivingProvider>(context, listen: false)
+          .getPlants(context)
+          .then((value) {
+        Provider.of<ReceivingProvider>(context, listen: false)
+            .fetchMappingData(context, widget.location)
+            .then((value) {
+          setState(() {
+            _isLoading = false;
+          });
+        });
+      });
+    }).then((value) {
+      initScannerResult = initScanner();
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
 
-    // stencilFocusNode.addListener(() {
-    //   if (stencilManualController.value.text.isNotEmpty) {
-    //     if (!stencilFocusNode.hasFocus) {
-    //       setState(() {
-    //         _isLoading = true;
-    //       });
-    //       Provider.of<BarcodeDetailProvider>(
-    //         context,
-    //         listen: false,
-    //       ).stencilVerficationForAddBarcode(
-    //         stencilManualController.value.text,
-    //         materialCode.isEmpty
-    //             ? Provider.of<DispatchProvider>(context, listen: false).matnr
-    //             : materialCode,
-    //         plantController.value.text,
-    //         widget.location,
-    //         widget.ordType,
-    //         widget.pickListnos,
-    //       );
-    //       setState(() {
-    //         _isLoading = false;
-    //       });
-    //     }
-    //   }
-    // });
+  Future showPlantBox(BuildContext context) async {
+    final itemSelect = Provider.of<ReceivingProvider>(context, listen: false);
 
-    // log("${isTrue} dsadas 12");
-    // checkSuccess = 0;
+    itemSelect.selectedMaterial = "";
+    itemSelect.stencilIdController = TextEditingController();
+    itemSelect.manuDateController = TextEditingController();
+    isTrue = true;
 
-    // Provider.of<DispatchProvider>(context, listen: false)
-    //     .getSingleDispatch(
-    //       widget.location,
-    //       widget.pickListnos,
-    //       widget.type != "COMPLETE DISPATCH LIST" ? "" : "C",
-    //     )
-    //     .then((value) {
-    //       Provider.of<BarcodeDetailProvider>(
-    //         context,
-    //         listen: false,
-    //       ).fetchMappingData(context, widget.location);
-    //     })
-    //     .then((value) {
-    //       initScannerResult = initScanner();
+    setState(() {});
 
-    //       setState(() {
-    //         _isLoading = false;
-    //       });
-    //     });
-    // tempScan();
+    await showModalBottomSheet<void>(
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20.0),
+      ),
+      backgroundColor: Colors.white,
+      context: context,
+      builder: (BuildContext context) {
+        final item = Provider.of<ReceivingProvider>(context, listen: true);
+        // final itemForPlant = Provider.of<AuthProvider>(context, listen: true);
+        final itemSelect =
+            Provider.of<ReceivingProvider>(context, listen: true);
+        return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState11) {
+          return Stack(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: Container(
+                  height: 1050.h,
+                  padding: EdgeInsets.symmetric(horizontal: 30.w),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        SizedBox(height: 40.h),
+                        Text("Add Barcode",
+                            style: textFieldStyle(
+                                color: Color.fromARGB(255, 1, 77, 138),
+                                weight: FontWeight.w700,
+                                fontSize: 43.sp)),
+                        SizedBox(height: 40.h),
+                        Container(
+                          margin: EdgeInsets.only(left: 8.w),
+                          child: CustomTextField(
+                            controller: item.barcodeManualController,
+                            isEnabled: false,
+                            labelText: "Enter Barcode",
+                            margin: false,
+                            checking: true,
+                          ),
+                        ),
+                        SizedBox(height: 30.h),
+                        Container(
+                          margin: EdgeInsets.only(left: 10.w, bottom: 20.h),
+                          child: DropdownInput(
+                            isMargin: false,
+                            controller: plantController,
+                            labelText: "Select Manufacturing Plant",
+                            // value: consajda.value.text,
+
+                            isEnabled: true,
+                            inputFieldWidth: double.infinity,
+                            items: item.plantList.map((PlantModal value) {
+                              return DropdownMenuItem<String>(
+                                value: value.description,
+                                child: Text(value.description),
+                              );
+                            }).toList(),
+                            onChanged: (value) async {
+                              print(value);
+                              // print("$value vauejnka");
+
+                              PlantModal cyz = item.plantList.firstWhere(
+                                  (element) => element.description == value);
+                              print("${cyz.code} indeftid");
+
+                              manPlantCode = cyz.code;
+
+                              setState(() {
+                                _isLoading = true;
+                              });
+
+                              await itemSelect.fetchCategories(
+                                  widget.location, cyz.code);
+
+                              setState(() {
+                                _isLoading = false;
+                              });
+
+                              itemSelect
+                                  .onMaterialPlantChangedformanul(cyz.code);
+                              plantController =
+                                  TextEditingController(text: cyz.description);
+                              setState(() {});
+                            },
+                          ),
+                        ),
+                        Container(
+                          alignment: Alignment.centerLeft,
+                          margin: EdgeInsets.only(left: 14.w, bottom: 10.h),
+                          child: DropdownInput(
+                            isMargin: false,
+                            controller: item.selectedCategory,
+                            labelText: "Select Category",
+                            isEnabled: true,
+                            inputFieldWidth: double.infinity,
+                            items: item
+                                .barcodeDetails.categoryDetails.categories
+                                .map((Category value) {
+                              return DropdownMenuItem<String>(
+                                value: value.description,
+                                child: Text(value.description),
+                              );
+                            }).toList(),
+                            onChanged: (value) async {
+                              setState(() {
+                                _isLoading = true;
+                              });
+
+                              log("$value checking value");
+                              log("${widget.location} checking value");
+                              log("${manPlantCode} checking value");
+
+                              await itemSelect.onCategoryChanged(
+                                value,
+                                widget.location,
+                                manPlantCode,
+                              );
+                              setState(() {
+                                _isLoading = false;
+                              });
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 15.h),
+                        Container(
+                          alignment: Alignment.centerLeft,
+                          margin: EdgeInsets.only(left: 14.w, bottom: 10.h),
+                          child: SearchableDropDown(
+                            labelName: "Select Item",
+                            dropDownItems: item
+                                .barcodeDetails.materialDetails.materials
+                                .map((material) => material.description)
+                                .toList(),
+                            selectedItem: item.selectedMaterial,
+                            onDropDownItemSelected: (p0) {
+                              print(p0);
+
+                              itemSelect.onMaterialItemChanged(p0.toString());
+                              var _materialDetail = item
+                                  .barcodeDetails.materialDetails.materials
+                                  .firstWhere(
+                                      (material) => material.description == p0);
+                              materialCode = _materialDetail.code;
+                              setState(() {});
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 40.h),
+                        Container(
+                          margin: EdgeInsets.symmetric(horizontal: 10.w),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: CustomTextField(
+                                  margin: false,
+                                  isEnabled: item.selectedMaterial.isEmpty &&
+                                          plantController.value.text.isEmpty
+                                      ? false
+                                      : true,
+                                  focusNode: stencilFocusNode,
+                                  maxlength: true,
+                                  onChanged: (p0) {
+                                    itemSelect.dateEmpty();
+                                  },
+                                  labelText: "Enter Stencil ID",
+                                  controller: itemSelect.stencilIdController,
+                                  validator: (value) {
+                                    // String finalStringsss = value!.substring(
+                                    //     (value.length - 4).clamp(0, value.length));
+                                    // print("$finalStringsss finalString");
+                                    if (value!.isEmpty) {
+                                      return "Stencil ID can't be empty";
+                                    } else {
+                                      return null;
+                                    }
+                                  },
+                                ),
+                              ),
+                              SizedBox(width: 5.w),
+                              if (itemSelect
+                                  .manuDateController.value.text.isNotEmpty)
+                                Container(
+                                    margin: EdgeInsets.only(bottom: 35.h),
+                                    child: Icon(Icons.check_circle,
+                                        color: Colors.blue))
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 15.h),
+                        CustomTextField(
+                          controller: itemSelect.manuDateController,
+                          labelText: "Select Mfg Date",
+                          isReadOnly: true,
+                        ),
+                        SizedBox(height: 10.h),
+                        Container(
+                          height: 90.h,
+                          margin: EdgeInsets.symmetric(horizontal: 10.w),
+                          width: double.infinity,
+                          child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Color.fromARGB(255, 1, 77, 138),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(12), // <-- Radius
+                                ),
+                              ),
+                              onPressed: () async {
+                                setState11(() {
+                                  _isLoadingInside = true;
+                                });
+                                // log(item.selectedMaterial);
+
+                                // bool check = await item.submitBarcode(
+                                //     item.barcodeManualController!.value.text,
+                                //     materialCode,
+                                //     itemSelect.stencilIdController.value.text,
+                                //     itemSelect.manuDateController.value.text,
+                                //     manPlantCode,
+                                //     widget.location,
+                                //     "IN${widget.location}${locationController.value.text}${binController.value.text}${rackController.value.text}${DateFormat('ddMMyy').format(DateTime.now()).toString()}");
+
+                                // if (check) {
+                                //   reload = true;
+                                //   setState(() {});
+                                //   setState11(() {
+                                //     _isLoadingInside = false;
+                                //   });
+                                //   Navigator.of(context).pop();
+                                // } else {
+                                //   setState(() {
+                                //     reload = false;
+                                //   });
+                                //   setState11(() {
+                                //     _isLoadingInside = false;
+                                //   });
+                                // }
+                              },
+                              child: Text("Submit",
+                                  style: textFieldStyle(
+                                      color: Colors.white,
+                                      weight: FontWeight.w700,
+                                      fontSize: 34.sp))),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (_isLoadingInside)
+                Center(
+                  child: LoaderTransparent(color: Colors.white),
+                ),
+            ],
+          );
+        });
+      },
+    ).whenComplete(() {
+      // final itemSelect =
+      //     Provider.of<BarcodeDetailProvider>(context, listen: true);
+      // itemSelect.selectedMaterial = "";
+      // itemSelect.stencilIdController = TextEditingController();
+
+      // prodDateManualController = TextEditingController();
+      // manufacturingDateManualController = TextEditingController();
+      // Provider.of<BarcodeDetailProvider>(context, listen: false)
+      //     .manuDateController = TextEditingController();
+
+      // Provider.of<AdHocProvider>(context, listen: false)
+      //     .barcodeManualController = TextEditingController();
+
+      // isTrue = false;
+
+      setState(() {});
+    });
   }
 
   Future<void> initScanner() async {
-    print("fall here true");
-    final item = Provider.of<ReceivingProvider>(context, listen: false);
     if (Platform.isAndroid) {
-      print("fall here true 2");
+      // final item = Provider.of<ReceivingProvider>(context, listen: false);
       fdw = FlutterDataWedge();
-      onScanResultListener = fdw.onScanResult.listen(
-        (result) => setState(() async {
-          scanResults = result;
-          if (isTrue) {
-            return item.getManualBarcode(result.data);
-          }                
+      onScanResultListener =
+          fdw.onScanResult.listen((result) => setState(() async {
+                scanResults = result;
 
-          await Provider.of<ReceivingProvider>(context, listen: false)
-              .scanDocument(
-                context,
-                barcode: result.data,
-                lineItemNo: "",
-                docType: "",
-                location: "",
-                storageLocation: "",
-                binCode: "",
-                rackCode: "",
-                documentNumber: widget.pickListnos,
-              )
-              .then((value) {
-                if (value) {
-                  // if (isTrue == false)
-                  //   Provider.of<ReceivingProvider>(
-                  //     context,
-                  //     listen: false,
-                  //   ).getSingleDispatch(
-                  //     widget.location,
-                  //     widget.pickListnos,
-                  //     widget.type != "COMPLETE DISPATCH LIST" ? "" : "C",
-                  //   );
-                  // //// response 200x
-                  checkSuccess = 1;
-                  setState(() {});
-                  //// response 200
-                } else {
-                  checkSuccess = 2;
-                  setState(() {});
-                  //// response 400
+                if (isTrue) {
+                  Provider.of<ReceivingProvider>(context, listen: false)
+                      .getManualBarcode(result.data);
                 }
-              });
-        }),
-      );
+
+                if (isTrue == false)
+                  await Provider.of<ReceivingProvider>(context, listen: false)
+                      .scanBarcode(result.data, widget.document.documentNumber,
+                          widget.type, widget.location, "", '', context,
+                          removeBarcode: removeCheck)
+                      .then((value) {
+                    if (value) {
+                      if (isTrue == false)
+                        Provider.of<ReceivingProvider>(context, listen: false)
+                            .fetchDocumentDetail(
+                                context,
+                                widget.document.documentNumber,
+                                widget.location);
+                      //// response 200x
+                      checkSuccess = 1;
+                      setState(() {});
+                      //// response 200
+                    } else {
+                      checkSuccess = 2;
+                      setState(() {});
+                      //// response 400
+                    }
+                  });
+              }));
 
       onScannerStatusListener = fdw.onScannerStatus.listen(
-        (status) => setState(() => lastStatus = status.status.toString()),
-      );
+          (status) => setState(() => lastStatus = status.status.toString()));
       await fdw.initialize();
     }
   }
-  
-
-  // Future tempScan() async {
-  //   log('$isTrue checktrue');
-
-  //   // if (widget.type != "COMPLETE DISPATCH LIST") {
-  //   //   if (Platform.isAndroid) {
-  //   //     log("here");
-  //   //     final item = Provider.of<DispatchProvider>(context, listen: false);
-  //   //     // fdw = FlutterDataWedge(profileName: 'flutter wedge');
-  //   //     int scanned = int.tryParse(item.singleOrderList[0].scanned) ?? 0;
-  //   //     int total = int.tryParse(item.singleOrderList[0].total) ?? 0;
-
-  //   //     log("here 1");
-  //   //     setState(() {
-  //   //       _isLoading = true;
-  //   //     });
-
-  //   //     if (isTrue) {
-  //   //       item.getManualBarcode("Y401280010");
-  //   //     }
-
-  //   //     log("${widget.erName} dsadas 11");
-
-  //   //     if (widget.erName != "O" &&
-  //   //         item.singleOrderList[0].scanned == item.singleOrderList[0].total &&
-  //   //         removeCheck == false) {
-  //   //       bool? checkVibrate = await Vibration.hasVibrator();
-
-  //   //       if (checkVibrate!) Vibration.vibrate();
-  //   //       AudioPlayer().play(AssetSource('audio/error.wav'));
-  //   //       item
-  //   //           .showDialogForallDialog(context, "Scanning Already Completed")
-  //   //           .then((value) {
-  //   //         player.stop();
-  //   //       });
-  //   //     } else {
-  //   //       if (isTrue == false)
-  //   //         await Provider.of<DispatchProvider>(context, listen: false)
-  //   //             .scanBarcode(
-  //   //           "Y401280010",
-  //   //           widget.pickListnos,
-  //   //           widget.docType,
-  //   //           widget.ordType,
-  //   //           widget.location,
-  //   //           "",
-  //   //           context,
-  //   //           removeBarcode: removeCheck,
-  //   //         )
-  //   //             .then((value) {
-  //   //           if (value) {
-  //   //             if (isTrue == false)
-  //   //               Provider.of<DispatchProvider>(context, listen: false)
-  //   //                   .getSingleDispatch(
-  //   //                 widget.location,
-  //   //                 widget.pickListnos,
-  //   //                 widget.type != "COMPLETE DISPATCH LIST" ? "" : "C",
-  //   //               );
-  //   //             //// response 200x
-  //   //             checkSuccess = 1;
-  //   //             setState(() {});
-  //   //             //// response 200
-  //   //           } else {
-  //   //             checkSuccess = 2;
-  //   //             setState(() {});
-  //   //             //// response 400
-  //   //           }
-  //   //         });
-  //   //     }
-
-  //   //     setState(() {
-  //   //       _isLoading = false;
-  //   //     });
-  //   //   }
-  //   // }
-  // }
 
   @override
   void dispose() {
@@ -1023,8 +588,10 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        CustomAppBar(text: 'RECEIVING'),
+                        CustomAppBar(text: 'Gate In'),
                         SizedBox(height: 15.h),
+                        customTile(widget.document, widget.location, context,
+                            () {}, "COMPLETED QA CAGE LIST"),
 
                         // Container(
                         //   width: double.infinity,
@@ -1368,6 +935,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                         //     ],
                         //   ),
                         // ),
+                      
                         SizedBox(height: 10.h),
 
                         //////
@@ -1391,104 +959,32 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                                 color: checkSuccess == 0
                                     ? Colors.grey
                                     : checkSuccess == 1
-                                    ? Color.fromARGB(255, 15, 122, 19)
-                                    : Color.fromARGB(255, 239, 36, 22),
+                                        ? Color.fromARGB(255, 15, 122, 19)
+                                        : Color.fromARGB(255, 239, 36, 22),
                                 width: checkSuccess == 0 ? 1 : 6,
                               ),
                             ),
                             child: Column(
                               children: [
-                                // if (checkSuccess == 1)
-                                //   Row(
-                                //     crossAxisAlignment: CrossAxisAlignment.end,
-                                //     mainAxisAlignment: MainAxisAlignment.end,
-                                //     children: [
-                                //       CircleAvatar(
-                                //         backgroundColor:
-                                //             item.showCircleLight == "R"
-                                //             ? Colors.red
-                                //             : Colors.green,
-                                //         radius: 28.r,
-                                //       ),
-                                //     ],
-                                //   ),
-                                // if (item.skuNo == "0" || item.skuNo.isEmpty)
-                                //   SizedBox(height: 15.h),
-                                // if (checkSuccess == 1)
-                                //   Row(
-                                //     children: [
-                                //       Expanded(
-                                //         child: BarcodeInfo(
-                                //           header: "Barcode",
-                                //           info: item.barcodeShow,
-                                //         ),
-                                //       ),
-                                //       if (item.skuNo != "0" &&
-                                //           item.skuNo.isNotEmpty)
-                                //         ElevatedButton(
-                                //           onPressed: () {
-                                //             Navigator.of(context).push(
-                                //               MaterialPageRoute(
-                                //                 builder: (context) {
-                                //                   return OldStkScreen(
-                                //                     location: widget.location,
-                                //                     materialCode: item.matnr,
-                                //                     materialDesc: item.material,
-                                //                     date: item.prodDate,
-                                //                   );
-                                //                 },
-                                //               ),
-                                //             );
-                                //           },
-                                //           style: ElevatedButton.styleFrom(
-                                //             backgroundColor: Color.fromARGB(
-                                //               255,
-                                //               84,
-                                //               157,
-                                //               217,
-                                //             ),
-                                //             foregroundColor: Colors.grey,
-                                //             padding: EdgeInsets.symmetric(
-                                //               horizontal: 20.w,
-                                //               vertical: 10.h,
-                                //             ),
-                                //           ),
-                                //           child: Text(
-                                //             "Old Stk : ${item.skuNo}",
-                                //             style: TextStyle(
-                                //               fontSize: 28.sp,
-                                //               fontWeight: FontWeight.bold,
-                                //               color: Colors.white,
-                                //             ),
-                                //           ),
-                                //         ),
-                                //       // BarcodeInfoOldSKu(
-                                //       //     header: "Old Sku", info: "5")
-                                //     ],
-                                //   ),
-                                // if (item.skuNo == "0" || item.skuNo.isEmpty)
-                                //   SizedBox(height: 15.h),
-
-                                // if (checkSuccess == 1)
-                                //   BarcodeInfo(
-                                //     header: "Mfg Date",
-                                //     info: item.prodDate,
-                                //   ),
-
-                                // SizedBox(height: 15.h),
-                                // if (checkSuccess == 1)
-                                //   BarcodeInfo(
-                                //     header: "Stencil No",
-                                //     bold: true,
-                                //     info: item.stencilNo,
-                                //   ),
-                                // SizedBox(height: 15.h),
-                                // if (checkSuccess == 1)
-                                //   BarcodeInfo(
-                                //     header: "Material",
-                                //     info: item.material,
-                                //   ),
-                                // SizedBox(height: 30.h),
+                                if (checkSuccess == 1)
+                                  BarcodeInfo(
+                                    header: "Mfg Date",
+                                    info: item.prodDate,
+                                  ),
+                                SizedBox(height: 15.h),
+                                if (checkSuccess == 1)
+                                  BarcodeInfo(
+                                    header: "Stencil No",
+                                    bold: true,
+                                    info: item.stencilNo,
+                                  ),
+                                SizedBox(height: 15.h),
+                                if (checkSuccess == 1)
+                                  BarcodeInfo(
+                                    header: "Material",
+                                    info: item.material,
+                                  ),
+                                SizedBox(height: 30.h),
                                 Spacer(),
                                 Container(
                                   width: double.infinity,
@@ -1553,72 +1049,139 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                                 fontSize: 29.sp,
                               ),
                             ),
-                        SizedBox(height: 10.h),
-
-                        // if (widget.type != "COMPLETE DISPATCH LIST")
-                        //   if (widget.userId != "N")
-                        //     Container(
-                        //       margin: EdgeInsets.symmetric(horizontal: 28.w),
-                        //       width: double.infinity,
-                        //       child: ElevatedButton(
-                        //         style: ElevatedButton.styleFrom(
-                        //           backgroundColor: Color.fromARGB(
-                        //             255,
-                        //             1,
-                        //             77,
-                        //             138,
-                        //           ),
-                        //           shape: RoundedRectangleBorder(
-                        //             borderRadius: BorderRadius.circular(
-                        //               12,
-                        //             ), // <-- Radius
-                        //           ),
-                        //         ),
-                        //         onPressed: () async {
-                        //           showPlantBox(context).then((value) async {
-                        //             if (reload == true) {
-                        //               _isLoading = true;
-                        //               setState(() {});
-                        //               await Provider.of<ReceivingProvider>(
-                        //                 context,
-                        //                 listen: false,
-                        //               ).getSingleDispatch(
-                        //                 widget.location,
-                        //                 widget.pickListnos,
-                        //                 widget.type != "COMPLETE DISPATCH LIST"
-                        //                     ? ""
-                        //                     : "C",
-                        //               );
-                        //               _isLoading = false;
-
-                        //               setState(() {});
-                        //             } else {}
-                        //           });
-                        //         },
-                        //         child: Text(
-                        //           "+ Add Barcode",
-                        //           style: textFieldStyle(
-                        //             color: Colors.white,
-                        //             weight: FontWeight.w700,
-                        //             fontSize: 30.sp,
-                        //           ),
-                        //         ),
-                        //       ),
-                        //     ),
                         SizedBox(height: 20.h),
-                        // ...(item.singleOrderList)
-                        //     .map(
-                        //       (e) => customTile(
-                        //         e,
-                        //         widget.type,
-                        //         context,
-                        //         widget.location,
-                        //         widget.docType,
-                        //         widget.pickListnos,
-                        //       ),
-                        //     )
-                        //     .toList(),
+
+                        Container(
+                          margin: EdgeInsets.symmetric(horizontal: 28.w),
+                          width: double.infinity,
+                          child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Color.fromARGB(255, 1, 77, 138),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(12), // <-- Radius
+                                ),
+                              ),
+                              onPressed: () async {
+                                showPlantBox(context).then((value) async {
+                                  if (reload == true) {
+                                    _isLoading = true;
+                                    setState(() {});
+                                    // await Provider.of<QacageProvider>(context,
+                                    //         listen: false)
+                                    //     .getSingleQaCageList(
+                                    //         widget.location,
+                                    //         widget.pickListnos,
+                                    //         widget.type !=
+                                    //                 "COMPLETED QA CAGE LIST"
+                                    //             ? ""
+                                    //             : "C");
+                                    _isLoading = false;
+
+                                    setState(() {});
+                                  } else {}
+                                });
+                              },
+                              child: Text("+ Add Barcode",
+                                  style: textFieldStyle(
+                                      color: Colors.white,
+                                      weight: FontWeight.w700,
+                                      fontSize: 30.sp))),
+                        ),
+
+                        SizedBox(height: 20.h),
+                        ...(item.documentDetail)
+                            .map(
+                              (e) => customTileDown(
+                                e,
+                                widget.type,
+                                context,
+                                widget.location,
+                                widget.docType,
+                                widget.pickListnos,
+                              ),
+                            )
+                            .toList(),
                       ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white),
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black,
+                            offset: Offset(0.0, 0.4), //(x,y)
+                            blurRadius: 0.6,
+                          ),
+                        ],
+                        borderRadius: BorderRadius.circular(8)),
+                    child: InkWell(
+                      onTap: () async {
+                        await showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              content: Text(
+                                  'Are you sure you want to Mark As Complete?'),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () async {
+                                    setState(() {
+                                      _isLoading = true;
+                                    });
+
+                                    bool check = await item.markAsCompleted(
+                                        widget.document.documentNumber,
+                                        widget.location,
+                                        'TT',
+                                        context);
+                                    if (check) {
+                                      Navigator.of(context).pop("yesload");
+                                    }
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                  },
+
+                                  //kjndkjasnd
+                                  child: Text('Yes'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    // Handle "No" button tap
+                                    Navigator.of(context).pop(
+                                        false); // Return false to the caller
+                                  },
+                                  child: Text('No'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text("Mark as Completed",
+                              style: textFieldStyle(
+                                  color: Color.fromARGB(255, 1, 77, 138),
+                                  fontSize: 28.sp,
+                                  weight: FontWeight.w700)),
+                          SizedBox(width: 10.w),
+                          Icon(Icons.arrow_forward_ios,
+                              size: 30.sp,
+                              color: Color.fromARGB(255, 1, 77, 138))
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -1632,274 +1195,125 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
   }
 }
 
-// Widget customTile(
-//   SingleDispatch data,
-//   String type,
-//   BuildContext context,
-//   String location,
-//   String docType,
-//   String order, {
-//   Function(bool?)? onChangedtx,
-// }) {
-//   print("${data.linePercentage} dasa");
-//   return InkWell(
-//     onTap: () {
-//       Navigator.of(context).push(
-//         MaterialPageRoute(
-//           builder: (context) {
-//             return BarcodesScreen(
-//               location: location,
-//               ordType: data.ordType,
-//               itemCode: data.matnr,
-//               lineItemNo: data.lineItemNo,
-//               customer: data.customerName,
-//               document: docType,
-//               order: order,
-//             );
-//           },
-//         ),
-//       );
-//     },
-//     child: Container(
-//       width: double.infinity,
-//       margin: EdgeInsets.symmetric(horizontal: 30.w, vertical: 14.h),
-//       decoration: BoxDecoration(
-//         // border: Border.all(color: Colors.white),
-//         color: Colors.white,
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black,
-//             offset: Offset(0.0, 0.4), //(x,y)
-//             blurRadius: 0.6,
-//           ),
-//         ],
-//         borderRadius: BorderRadius.circular(8),
-//       ),
-//       child: Column(
-//         children: [
-//           SizedBox(height: 10.h),
-//           Padding(
-//             padding: EdgeInsets.only(left: 20.w, right: 15.w, top: 20.h),
-//             child: Row(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 SizedBox(
-//                   width: 130.w,
-//                   child: Text(
-//                     "Item Desc",
-//                     style: textFieldStyle(
-//                       color: Colors.grey.shade800,
-//                       fontSize: 26.sp,
-//                       weight: FontWeight.w500,
-//                     ),
-//                   ),
-//                 ),
-//                 SizedBox(width: 20.w),
-//                 Expanded(
-//                   child: Text(
-//                     data.maktx,
-//                     style: textFieldStyle(
-//                       color: Color.fromARGB(255, 1, 77, 138),
-//                       fontSize: 28.sp,
-//                       weight: FontWeight.w700,
-//                     ),
-//                   ),
-//                 ),
-//                 SizedBox(width: 3.w),
-//                 Container(
-//                   decoration: BoxDecoration(
-//                     border: Border.all(color: Colors.grey),
-//                     borderRadius: BorderRadius.circular(40),
-//                   ),
-//                   child: CircleAvatar(
-//                     radius: 16,
-//                     backgroundColor: Colors.white,
-//                     child: Icon(
-//                       Icons.arrow_forward_ios_outlined,
-//                       color: Colors.grey,
-//                       size: 35.sp,
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           SizedBox(height: 10.h),
-//           Padding(
-//             padding: EdgeInsets.only(left: 20.w, right: 15.w, top: 30.h),
-//             child: Row(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 SizedBox(
-//                   width: 130.w,
-//                   child: Text(
-//                     "Item Code",
-//                     style: textFieldStyle(
-//                       color: Colors.grey.shade800,
-//                       fontSize: 26.sp,
-//                       weight: FontWeight.w500,
-//                     ),
-//                   ),
-//                 ),
-//                 SizedBox(width: 20.w),
-//                 Text(
-//                   data.matnr,
-//                   style: textFieldStyle(
-//                     color: Color.fromARGB(255, 1, 77, 138),
-//                     fontSize: 28.sp,
-//                     weight: FontWeight.w700,
-//                   ),
-//                 ),
-//                 Spacer(),
-//                 InkWell(
-//                   onTap: () {
-//                     print("object");
-//                     Navigator.of(context).push(
-//                       MaterialPageRoute(
-//                         builder: (context) {
-//                           return CartPageScreen(
-//                             location: location,
-//                             materialCode: data.matnr,
-//                             materialDesc: data.maktx,
-//                           );
-//                         },
-//                       ),
-//                     );
-//                   },
-//                   child: Container(
-//                     alignment: Alignment.center,
-//                     decoration: BoxDecoration(
-//                       border: Border.all(color: Colors.grey),
-//                       borderRadius: BorderRadius.circular(40),
-//                     ),
-//                     child: CircleAvatar(
-//                       radius: 16,
-//                       backgroundColor: Color.fromARGB(255, 1, 77, 138),
-//                       child: Icon(
-//                         Icons.shopping_cart,
-//                         color: Colors.white,
-//                         size: 35.sp,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           SizedBox(height: 10.h),
-//           Padding(
-//             padding: EdgeInsets.only(
-//               left: 20.w,
-//               right: 15.w,
-//               top: 20.h,
-//               bottom: 30.h,
-//             ),
-//             child: Row(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 SizedBox(
-//                   width: 130.w,
-//                   child: Text(
-//                     "Quantity",
-//                     style: textFieldStyle(
-//                       color: Colors.grey.shade800,
-//                       fontSize: 26.sp,
-//                       weight: FontWeight.w500,
-//                     ),
-//                   ),
-//                 ),
-//                 SizedBox(width: 20.w),
-//                 Text(
-//                   "${data.readCnt}/${data.ordQty}",
-//                   style: textFieldStyle(
-//                     color: Color.fromARGB(255, 1, 77, 138),
-//                     fontSize: 28.sp,
-//                     weight: FontWeight.w700,
-//                   ),
-//                 ),
-//                 SizedBox(width: 40.w),
-//                 SizedBox(
-//                   width: 200.w,
-//                   child: Text(
-//                     "Stock Quantity :",
-//                     style: textFieldStyle(
-//                       color: Colors.grey.shade800,
-//                       fontSize: 26.sp,
-//                       weight: FontWeight.w500,
-//                     ),
-//                   ),
-//                 ),
-//                 SizedBox(width: 20.w),
-//                 Text(
-//                   "${data.stkQty}",
-//                   style: textFieldStyle(
-//                     color: Color.fromARGB(255, 1, 77, 138),
-//                     fontSize: 28.sp,
-//                     weight: FontWeight.w700,
-//                   ),
-//                 ),
-//                 Spacer(),
-//                 InkWell(
-//                   onTap: () {
-//                     print("object");
-//                     Navigator.of(context).push(
-//                       MaterialPageRoute(
-//                         builder: (context) {
-//                           return BinSummaryScreen(
-//                             location: location,
-//                             materialCode: data.matnr,
-//                             materialDesc: data.maktx,
-//                             user: data.ordQty,
-//                           );
-//                         },
-//                       ),
-//                     );
-//                   },
-//                   child: Container(
-//                     alignment: Alignment.center,
-//                     decoration: BoxDecoration(
-//                       border: Border.all(color: Colors.grey),
-//                       borderRadius: BorderRadius.circular(40),
-//                     ),
-//                     child: CircleAvatar(
-//                       radius: 16,
-//                       backgroundColor: Color.fromARGB(255, 1, 77, 138),
-//                       child: Padding(
-//                         padding: EdgeInsets.only(left: 2.w),
-//                         child: SvgPicture.asset(
-//                           "assets/newfinal.svg",
-//                           fit: BoxFit.cover,
-//                           height: 28.h,
-//                           width: 35.w,
-//                           // ignore: deprecated_member_use
-//                           color: Colors.white,
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           ClipRRect(
-//             borderRadius: BorderRadius.only(
-//               bottomLeft: Radius.circular(8),
-//               bottomRight: Radius.circular(8),
-//             ),
-//             child: LinearPercentIndicator(
-//               lineHeight: 28.0.h,
-//               padding: EdgeInsets.zero,
-//               percent: double.parse(data.linePercentage),
-//               animation: true,
-//               backgroundColor: Colors.white,
-//               progressColor: data.linePercentage == "1"
-//                   ? Color.fromARGB(255, 15, 122, 19)
-//                   : const Color.fromARGB(255, 241, 222, 51),
-//               // Color.fromARGB(255, 117, 221, 120),
-//             ),
-//           ),
-//         ],
-//       ),
-//     ),
-//   );
-// }
+Widget customTileDown(
+  DocumentDetailData data,
+  String type,
+  BuildContext context,
+  String location,
+  String docType,
+  String order, {
+  Function(bool?)? onChangedtx,
+}) {
+  return Container(
+    width: double.infinity,
+    margin: EdgeInsets.symmetric(horizontal: 30.w, vertical: 14.h),
+    decoration: BoxDecoration(
+      // border: Border.all(color: Colors.white),
+      color: Colors.white,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black,
+          offset: Offset(0.0, 0.4), //(x,y)
+          blurRadius: 0.6,
+        ),
+      ],
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Column(
+      children: [
+        SizedBox(height: 10.h),
+        Padding(
+          padding: EdgeInsets.only(left: 20.w, right: 15.w, top: 20.h),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 150.w,
+                child: Text(
+                  "Item Desc",
+                  style: textFieldStyle(
+                    color: Colors.grey.shade800,
+                    fontSize: 26.sp,
+                    weight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              SizedBox(width: 20.w),
+              Expanded(
+                child: Text(
+                  data.maktx,
+                  style: textFieldStyle(
+                    color: Color.fromARGB(255, 1, 77, 138),
+                    fontSize: 28.sp,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 10.h),
+        Padding(
+          padding: EdgeInsets.only(left: 20.w, right: 15.w, top: 30.h),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 150.w,
+                child: Text(
+                  "Item Code",
+                  style: textFieldStyle(
+                    color: Colors.grey.shade800,
+                    fontSize: 26.sp,
+                    weight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              SizedBox(width: 20.w),
+              Text(
+                data.matnr,
+                style: textFieldStyle(
+                  color: Color.fromARGB(255, 1, 77, 138),
+                  fontSize: 28.sp,
+                  weight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 10.h),
+        Padding(
+          padding: EdgeInsets.only(left: 20.w, right: 15.w, top: 30.h),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 150.w,
+                child: Text(
+                  "Scan Qty.",
+                  style: textFieldStyle(
+                    color: Colors.grey.shade800,
+                    fontSize: 26.sp,
+                    weight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              SizedBox(width: 20.w),
+              Text(
+                data.skuCnt,
+                style: textFieldStyle(
+                  color: Color.fromARGB(255, 1, 77, 138),
+                  fontSize: 28.sp,
+                  weight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 10.h),
+      ],
+    ),
+  );
+}
+
+ 

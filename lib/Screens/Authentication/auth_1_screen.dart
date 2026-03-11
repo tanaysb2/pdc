@@ -1,15 +1,13 @@
 import 'dart:async';
-
-import 'package:connectivity_plus/connectivity_plus.dart';
+ 
 import 'package:flutter/material.dart';
 
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
 import 'package:pdc/Screens/landing_screen.dart';
-import 'package:pdc/main.dart';
+import 'package:pdc/main.dart'; 
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vpn_connection_detector/vpn_connection_detector.dart';
+import 'package:shared_preferences/shared_preferences.dart'; 
 
 import '../../Providers/auth_provider.dart';
 
@@ -25,11 +23,10 @@ class _AuthScreenState extends State<AuthScreen> {
   String password = "";
   String otp = "";
   var focusNode = FocusNode();
-  bool enter = false;
-  late StreamSubscription<ConnectivityResult> subscription;
+  bool enter = false; 
 
   bool errorShow = false;
-  final vpnDetector = VpnConnectionDetector();
+ 
 
   @override
   void initState() {

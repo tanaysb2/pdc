@@ -34,7 +34,7 @@ class UrlHolderLoan {
       "v1/order/materialtransfer/order";
   static const singleDispatch = "v1/order/dispatch/order";
   static const singleSto = "v1/order/sto/order";
-  static const scanBarcode = "v1/barcode";
+  static const scanBarcode = "v1/barcode/pid";
   // static const scanBarcodeForQaCage = "v1/barcode/barcodenew";
   static const getCages = "v1/general/cage";
   static const getLocationCage = "v1/general/cagelocations";
@@ -73,9 +73,10 @@ class UrlHolderLoan {
   static const scanBarcodeForMaterialTransfer = "v1/barcode/materialtransfer";
   static const scanPallete = "v1/pallette/verify";
   static const scanInnerPallete = "v1/barcode/pallette";
+  static const getPhysicalInventory = 'v1/order/pid';
   static const getSinglePhysicalInventory = "v1/order/pid/order";
   static const markAsCompletedForPhysicalInventory = "v1/order/pid";
-  
+  static const scanBarcodeForPhysicalInventory = "v1/barcode/pid";
   static const getMappingLocations = "v1/general/storagelocations";
   static const getMappingCategories = "v1/general/skucategory";
   static const getMappingMaterials = "v1/general/sku";
@@ -96,14 +97,4 @@ class UrlHolderLoan {
   static const getReasons = "v1/pdc/master/reasons";
   static const getCompetitors = "v1/pdc/master/competitors";
   static const getModules = "v1/pdc/master/modules";
-
-
-///// RECEIVE
- 
- 
-  static const getMarkAsCompleteReceive = 'v1/order/pid';
-  static const getScanReceive = "v1/barcode/pid";
-
-
-  
 }

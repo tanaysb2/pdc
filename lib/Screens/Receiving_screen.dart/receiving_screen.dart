@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pdc/Modules/document_detail_model.dart';
 import 'package:pdc/Modules/document_modal.dart';
 import 'package:pdc/Providers/receiving_provider.dart';
 import 'package:pdc/Resuable%20components/app_bar.dart';
@@ -48,32 +47,31 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
     Provider.of<ReceivingProvider>(context, listen: false)
         .fetchDocuments(context, widget.type, "MG", widget.location)
         .then((value) {
+      Provider.of<ReceivingProvider>(
+        // ignore: use_build_context_synchronously
+        context,
+        listen: false,
+        // ignore: use_build_context_synchronously
+      ).fetchDepartments(context, widget.location).then((value) {
+        Provider.of<ReceivingProvider>(
+          // ignore: use_build_context_synchronously
+          context,
+          listen: false,
+          // ignore: use_build_context_synchronously
+        ).fetchCompetitors(context, widget.location).then((value) {
           Provider.of<ReceivingProvider>(
             // ignore: use_build_context_synchronously
             context,
             listen: false,
             // ignore: use_build_context_synchronously
-          ).fetchDepartments(context, widget.location).then((value) {
-            Provider.of<ReceivingProvider>(
-              // ignore: use_build_context_synchronously
-              context,
-              listen: false,
-              // ignore: use_build_context_synchronously
-            ).fetchCompetitors(context, widget.location).then((value) {
-              Provider.of<ReceivingProvider>(
-                // ignore: use_build_context_synchronously
-                context,
-                listen: false,
-                // ignore: use_build_context_synchronously
-              ).fetchReasons(context, widget.location);
-            });
-          });
-        })
-        .then((value) {
-          setState(() {
-            _isLoading = false;
-          });
+          ).fetchReasons(context, widget.location);
         });
+      });
+    }).then((value) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   @override
@@ -156,7 +154,7 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
                   body: Column(
                     children: [
                       CustomAppBar(
-                        text: "RECEIVING",
+                        text: "Gate In",
                         trailingIcon: ClipRRect(
                           borderRadius: BorderRadius.circular(16.w),
                           child: Image.asset(
@@ -167,16 +165,16 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
                           ),
                         ),
                       ),
-
                       Expanded(
                         child: ListView.builder(
                           itemCount: item.documents.length,
                           itemBuilder: (context, index) {
                             return customTile(
                               item.documents[index],
+                              widget.location,
                               context,
                               refresh,
-                              "COMPLETED QA CAGE LIST",
+                              widget.type,
                             );
                           },
                         ),
@@ -224,30 +222,30 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
 
 Widget customTile(
   DocumentData document,
+  String location,
   BuildContext context,
   final Function callback,
   String type,
 ) {
   return InkWell(
     onTap: () {
-      Navigator.of(context)
-          .push(
-            MaterialPageRoute(
-              builder: (context) {
-                return ReceivingScanScreen(
-                  location: "",
-                  type: type,
-                  pickListnos: '',
-                  invoiceNo: '',
-                  docType: '',
-                  ordType: '',
-                );
-              },
-            ),
-          )
-          .then((value) {
-            callback();
-          });
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) {
+            return ReceivingScanScreen(
+              document: document,
+              location: location,
+              type: type,
+              pickListnos: '',
+              invoiceNo: '',
+              docType: '',
+              ordType: '',
+            );
+          },
+        ),
+      ).then((value) {
+        callback();
+      });
     },
     child: Container(
       width: double.infinity,
@@ -289,9 +287,7 @@ Widget customTile(
                                 weight: FontWeight.w500,
                               ),
                             ),
-
                             SizedBox(height: 3.h),
-
                             SizedBox(
                               width: 320.w,
                               child: Text(
@@ -304,7 +300,6 @@ Widget customTile(
                                 ),
                               ),
                             ),
-
                             SizedBox(height: 10.h),
                           ],
                         ),
@@ -334,9 +329,7 @@ Widget customTile(
                         ),
                       ],
                     ),
-
                     SizedBox(height: 3.h),
-
                     Row(
                       children: [
                         Column(

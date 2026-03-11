@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pdc/Providers/auth_provider.dart';
 import 'package:pdc/Providers/receiving_provider.dart';
 import 'package:pdc/Screens/Authentication/auth_1_screen.dart';
-import 'package:pdc/Screens/landing_screen.dart';
+import 'package:pdc/Screens/landing_screen.dart'; 
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
