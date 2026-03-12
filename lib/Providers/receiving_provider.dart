@@ -252,7 +252,7 @@ class ReceivingProvider with ChangeNotifier {
     final txtoken = prefs.getString("userToken");
     var headers = {'Authorization': 'Bearer $txtoken'};
     var request = Request('POST',
-        Uri.parse('${UrlHolderLoan.baseUrl}${UrlHolderLoan.markAsCompleted}'));
+        Uri.parse('${UrlHolderLoan.baseUrl}${UrlHolderLoan.markAsCompletedForPhysicalInventory}'));
     request.body = json.encode({
       "pickListNo": picklistNo.trimRight(),
       "location": location.trimRight(),
@@ -266,7 +266,7 @@ class ReceivingProvider with ChangeNotifier {
     if (response.statusCode == 200) {
       bool? checkVibrate = await Vibration.hasVibrator();
       final xyz = await response.stream.bytesToString();
-      if (checkVibrate!) Vibration.vibrate();
+      if (checkVibrate) Vibration.vibrate();
       AudioPlayer().play(AssetSource('audio/sound.wav'));
 
       final responseData = json.decode(xyz)["message"];
@@ -282,11 +282,12 @@ class ReceivingProvider with ChangeNotifier {
     } else {
       bool? checkVibrate = await Vibration.hasVibrator();
       final xyz = await response.stream.bytesToString();
-      if (checkVibrate!) Vibration.vibrate();
+      if (checkVibrate) Vibration.vibrate();
       AudioPlayer().play(AssetSource('audio/error.wav'));
 
       final responseData = json.decode(xyz)["message"];
 
+     
       showDialogForallDialog(context, responseData.toString());
 
       notifyListeners();
