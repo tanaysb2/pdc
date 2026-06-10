@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pdc/Modules/bin_model.dart';
@@ -15,7 +17,13 @@ import 'package:provider/provider.dart';
 class AddReceivingScreen extends StatefulWidget {
   final String location;
   final String type;
-  AddReceivingScreen({super.key, required this.location, required this.type});
+  final String name;
+  AddReceivingScreen({
+    super.key,
+    required this.location,
+    required this.type,
+    required this.name,
+  });
   @override
   _AddReceivingScreenState createState() => _AddReceivingScreenState();
 }
@@ -63,8 +71,8 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
     final names = _uniqueCompetitorNames(competitors);
     final validValue =
         selectedCompany != null && names.contains(selectedCompany)
-            ? selectedCompany
-            : (names.isNotEmpty ? names.first : null);
+        ? selectedCompany
+        : (names.isNotEmpty ? names.first : null);
     return DropdownButton<String>(
       iconEnabledColor: Colors.black,
       value: validValue,
@@ -94,8 +102,8 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
     final codes = purposes.map((p) => p.purposeCode).toList();
     final validValue =
         selectedPurpose != null && codes.contains(selectedPurpose)
-            ? selectedPurpose
-            : (codes.isNotEmpty ? codes.first : null);
+        ? selectedPurpose
+        : (codes.isNotEmpty ? codes.first : null);
     return DropdownButton<String>(
       iconEnabledColor: Colors.black,
       value: validValue,
@@ -152,7 +160,7 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
     );
   }
 
-  /// Build Department dropdown from provider departments (fetchDepartments); value is departmentCode.
+  // /// Build Department dropdown from provider departments (fetchDepartments); value is departmentCode.
   Widget _buildDepartmentDropdown(
     List<Department> departments,
     String? selectedDepartment,
@@ -161,8 +169,8 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
     final codes = departments.map((d) => d.departmentCode).toList();
     final validValue =
         selectedDepartment != null && codes.contains(selectedDepartment)
-            ? selectedDepartment
-            : (codes.isNotEmpty ? codes.first : null);
+        ? selectedDepartment
+        : (codes.isNotEmpty ? codes.first : null);
     return DropdownButton<String>(
       iconEnabledColor: Colors.black,
       value: validValue,
@@ -186,105 +194,112 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
     );
   }
 
-  Widget _buildLocationDropdown(
-    List<String> locationList,
-    String? selectedLocation,
-    ValueChanged<String?> onChanged,
-  ) {
-    final validValue =
-        selectedLocation != null && locationList.contains(selectedLocation)
-            ? selectedLocation
-            : (locationList.isNotEmpty ? locationList.first : null);
-    return DropdownButton<String>(
-      iconEnabledColor: Colors.black,
-      value: validValue,
-      style: textFieldStyle(color: Colors.black, fontSize: 24.sp),
-      isExpanded: true,
-      hint: locationList.isEmpty
-          ? Text(
-              'No locations',
-              style: textFieldStyle(color: Colors.grey, fontSize: 24.sp),
-            )
-          : null,
-      items: locationList
-          .map(
-            (String value) =>
-                DropdownMenuItem<String>(value: value, child: Text(value)),
-          )
-          .toList(),
-      onChanged: locationList.isEmpty ? null : onChanged,
-    );
-  }
+  // Widget _buildLocationDropdown(
+  //   List<String> locationList,
+  //   String? selectedLocation,
+  //   ValueChanged<String?> onChanged,
+  // ) {
+  //   final validValue =
+  //       selectedLocation != null && locationList.contains(selectedLocation)
+  //           ? selectedLocation
+  //           : (locationList.isNotEmpty ? locationList.first : null);
+  //   return DropdownButton<String>(
+  //     iconEnabledColor: Colors.black,
+  //     value: validValue,
+  //     style: textFieldStyle(color: Colors.black, fontSize: 24.sp),
+  //     isExpanded: true,
+  //     hint: locationList.isEmpty
+  //         ? Text(
+  //             'No locations',
+  //             style: textFieldStyle(color: Colors.grey, fontSize: 24.sp),
+  //           )
+  //         : null,
+  //     items: locationList
+  //         .map(
+  //           (String value) =>
+  //               DropdownMenuItem<String>(value: value, child: Text(value)),
+  //         )
+  //         .toList(),
+  //     onChanged: locationList.isEmpty ? null : onChanged,
+  //   );
+  // }
 
-  Widget _buildRackDropdown(
-    List<Rack> rackList,
-    String? selectedRack,
-    ValueChanged<String?> onChanged,
-  ) {
-    final validRacks =
-        rackList.where((r) => r.code != null && r.code!.isNotEmpty).toList();
-    final codes = validRacks.map((r) => r.code!).toList();
-    final validValue = selectedRack != null && codes.contains(selectedRack)
-        ? selectedRack
-        : (codes.isNotEmpty ? codes.first : null);
-    return DropdownButton<String>(
-      iconEnabledColor: Colors.black,
-      value: validValue,
-      style: textFieldStyle(color: Colors.black, fontSize: 24.sp),
-      isExpanded: true,
-      hint: validRacks.isEmpty
-          ? Text(
-              'Select Rack',
-              style: textFieldStyle(color: Colors.grey, fontSize: 24.sp),
-            )
-          : null,
-      items: validRacks
-          .map(
-            (Rack value) => DropdownMenuItem<String>(
-              value: value.code!,
-              child: Text(value.description ?? ''),
-            ),
-          )
-          .toList(),
-      onChanged: validRacks.isEmpty ? null : onChanged,
-    );
-  }
+  // Widget _buildRackDropdown(
+  //   List<Rack> rackList,
+  //   String? selectedRack,
+  //   ValueChanged<String?> onChanged,
+  // ) {
+  //   final validRacks =
+  //       rackList.where((r) => r.code != null && r.code!.isNotEmpty).toList();
+  //   final codes = validRacks.map((r) => r.code!).toList();
+  //   final validValue = selectedRack != null && codes.contains(selectedRack)
+  //       ? selectedRack
+  //       : (codes.isNotEmpty ? codes.first : null);
+  //   return DropdownButton<String>(
+  //     iconEnabledColor: Colors.black,
+  //     value: validValue,
+  //     style: textFieldStyle(color: Colors.black, fontSize: 24.sp),
+  //     isExpanded: true,
+  //     hint: validRacks.isEmpty
+  //         ? Text(
+  //             'Select Rack',
+  //             style: textFieldStyle(color: Colors.grey, fontSize: 24.sp),
+  //           )
+  //         : null,
+  //     items: validRacks
+  //         .map(
+  //           (Rack value) => DropdownMenuItem<String>(
+  //             value: value.code!,
+  //             child: Text(value.description ?? ''),
+  //           ),
+  //         )
+  //         .toList(),
+  //     onChanged: validRacks.isEmpty ? null : onChanged,
+  //   );
+  // }
 
-  Widget _buildBinDropdown(
-    List<Bin> binList,
-    String? selectedBin,
-    ValueChanged<String?> onChanged,
-  ) {
-    final codes = binList.map((b) => b.code).toList();
-    final validValue = selectedBin != null && codes.contains(selectedBin)
-        ? selectedBin
-        : (codes.isNotEmpty ? codes.first : null);
-    return DropdownButton<String>(
-      iconEnabledColor: Colors.black,
-      value: validValue,
-      style: textFieldStyle(color: Colors.black, fontSize: 24.sp),
-      isExpanded: true,
-      hint: binList.isEmpty
-          ? Text(
-              'Select Rack',
-              style: textFieldStyle(color: Colors.grey, fontSize: 24.sp),
-            )
-          : null,
-      items: binList
-          .map(
-            (Bin value) => DropdownMenuItem<String>(
-              value: value.code,
-              child: Text(value.description ?? ''),
-            ),
-          )
-          .toList(),
-      onChanged: binList.isEmpty ? null : onChanged,
-    );
-  }
+  // Widget _buildBinDropdown(
+  //   List<Bin> binList,
+  //   String? selectedBin,
+  //   ValueChanged<String?> onChanged,
+  // ) {
+  //   final codes = binList.map((b) => b.code).toList();
+  //   final validValue = selectedBin != null && codes.contains(selectedBin)
+  //       ? selectedBin
+  //       : (codes.isNotEmpty ? codes.first : null);
+  //   return DropdownButton<String>(
+  //     iconEnabledColor: Colors.black,
+  //     value: validValue,
+  //     style: textFieldStyle(color: Colors.black, fontSize: 24.sp),
+  //     isExpanded: true,
+  //     hint: binList.isEmpty
+  //         ? Text(
+  //             'Select Rack',
+  //             style: textFieldStyle(color: Colors.grey, fontSize: 24.sp),
+  //           )
+  //         : null,
+  //     items: binList
+  //         .map(
+  //           (Bin value) => DropdownMenuItem<String>(
+  //             value: value.code,
+  //             child: Text(value.description ?? ''),
+  //           ),
+  //         )
+  //         .toList(),
+  //     onChanged: binList.isEmpty ? null : onChanged,
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
     final item = Provider.of<ReceivingProvider>(context, listen: true);
+    final hideCompanyAndPurpose =
+        widget.name == "Gate Out" || widget.name == "Transfer";
+    final showCompanyType = !hideCompanyAndPurpose;
+    final showPurpose = !hideCompanyAndPurpose;
+    final showReason =
+        widget.name != "Gate In" && widget.name != "Transfer";
+    log("type: ${widget.type}");
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -296,7 +311,7 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                 child: Column(
                   children: [
                     CustomAppBar(
-                      text: "ADD RECEIVING",
+                      text: "ADD ${widget.name.toUpperCase()}",
                       trailingIcon: ClipRRect(
                         borderRadius: BorderRadius.circular(16.w),
                         child: Image.asset(
@@ -330,53 +345,58 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                               // SizedBox(height: 30.h),
 
                               // Type dropdown (jk/others)
-                              Text(
-                                'Company Type',
-                                style: textFieldStyle(
-                                  color: Colors.black,
-                                  fontSize: 26.sp,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(height: 10.h),
-                              Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey,
-                                    width: 2,
+                              if (showCompanyType) ...[
+                                Text(
+                                  'Company Type',
+                                  style: textFieldStyle(
+                                    color: Colors.black,
+                                    fontSize: 26.sp,
+                                    weight: FontWeight.w600,
                                   ),
-                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                padding: EdgeInsets.symmetric(horizontal: 15.w),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    iconEnabledColor: Colors.black,
-                                    value: item.selectedType,
-                                    style: textFieldStyle(
-                                      color: Colors.black,
-                                      fontSize: 24.sp,
+                                SizedBox(height: 10.h),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.grey,
+                                      width: 2,
                                     ),
-                                    isExpanded: true,
-                                    items: ["JK Tyre", "Others"].map((
-                                      String value,
-                                    ) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Text(value),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      if (newValue != null) {
-                                        item.setSelectedType(newValue);
-                                      }
-                                    },
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 15.w,
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      iconEnabledColor: Colors.black,
+                                      value: item.selectedType,
+                                      style: textFieldStyle(
+                                        color: Colors.black,
+                                        fontSize: 24.sp,
+                                      ),
+                                      isExpanded: true,
+                                      items: ["JK Tyre", "Others"].map((
+                                        String value,
+                                      ) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String? newValue) {
+                                        if (newValue != null) {
+                                          item.setSelectedType(newValue);
+                                        }
+                                      },
+                                    ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(height: 20.h),
+                                SizedBox(height: 20.h),
+                              ],
 
                               // Company dropdown (only if "others" is selected)
-                              if (item.selectedType == "Others") ...[
+                              if (showCompanyType &&
+                                  item.selectedType == "Others") ...[
                                 Text(
                                   'Company',
                                   style: textFieldStyle(
@@ -409,76 +429,117 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                               ],
 
                               // Purpose dropdown
-                              Text(
-                                'Purpose',
-                                style: textFieldStyle(
-                                  color: Colors.black,
-                                  fontSize: 26.sp,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(height: 10.h),
-
-                              Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(horizontal: 15.w),
-                                child: DropdownButtonHideUnderline(
-                                  child: _buildPurposeDropdown(
-                                    item.purposes,
-                                    item.selectedPurpose,
-                                    item.setSelectedPurpose,
+                              if (showPurpose) ...[
+                                Text(
+                                  'Purpose',
+                                  style: textFieldStyle(
+                                    color: Colors.black,
+                                    fontSize: 26.sp,
+                                    weight: FontWeight.w600,
                                   ),
                                 ),
-                              ),
-
-                              SizedBox(height: 20.h),
+                                SizedBox(height: 10.h),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.grey,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 15.w,
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: _buildPurposeDropdown(
+                                      item.purposes,
+                                      item.selectedPurpose,
+                                      item.setSelectedPurpose,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 20.h),
+                              ],
 
                               // Reason dropdown
-                              Text(
-                                'Reason',
-                                style: textFieldStyle(
-                                  color: Colors.black,
-                                  fontSize: 26.sp,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(height: 10.h),
-                              Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(horizontal: 15.w),
-                                child: DropdownButtonHideUnderline(
-                                  child: _buildReasonDropdown(
-                                    item.reasons,
-                                    item.selectedReason,
-                                    item.setSelectedReason,
+                              if (showReason) ...[
+                                Text(
+                                  'Reason',
+                                  style: textFieldStyle(
+                                    color: Colors.black,
+                                    fontSize: 26.sp,
+                                    weight: FontWeight.w600,
                                   ),
                                 ),
-                              ),
-                              SizedBox(height: 20.h),
+                                SizedBox(height: 10.h),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.grey,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 15.w,
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: _buildReasonDropdown(
+                                      item.reasons,
+                                      item.selectedReason,
+                                      item.setSelectedReason,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 20.h),
+                              ],
 
                               // // Department dropdown
+                              if (widget.name == "Issue" ||
+                                  widget.name == "Receive") ...[
+                                Text(
+                                  'Department',
+                                  style: textFieldStyle(
+                                    color: Colors.black,
+                                    fontSize: 26.sp,
+                                    weight: FontWeight.w600,
+                                  ),
+                                ),
+
+                                SizedBox(height: 10.h),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.grey,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 15.w,
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: _buildDepartmentDropdown(
+                                      item.departments,
+                                      item.selectedDepartment,
+                                      item.setSelectedDepartment,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              // SizedBox(height: 20.h),
+
+                              // Location dropdown
                               // Text(
-                              //   'Department',
+                              //   'Location',
                               //   style: textFieldStyle(
                               //     color: Colors.black,
                               //     fontSize: 26.sp,
                               //     weight: FontWeight.w600,
                               //   ),
                               // ),
-
                               // SizedBox(height: 10.h),
+
                               // Container(
                               //   decoration: BoxDecoration(
                               //     border: Border.all(
@@ -489,52 +550,89 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                               //   ),
                               //   padding: EdgeInsets.symmetric(horizontal: 15.w),
                               //   child: DropdownButtonHideUnderline(
-                              //     child: _buildDepartmentDropdown(
-                              //       item.departments,
-                              //       item.selectedDepartment,
-                              //       item.setSelectedDepartment,
+                              //     child: _buildLocationDropdown(
+                              //       item.locationList,
+                              //       item.selectedLocationss,
+                              //       (String? value) async {
+                              //         if (value == null) return;
+                              //         item.setSelectedLocation(value);
+                              //         await item.getBin(widget.location, value);
+                              //       },
                               //     ),
                               //   ),
                               // ),
-                              // SizedBox(height: 20.h),
 
-                              // Location dropdown
-                              Text(
-                                'Location',
-                                style: textFieldStyle(
-                                  color: Colors.black,
-                                  fontSize: 26.sp,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(height: 10.h),
+                              // if (item.binList.isNotEmpty) ...[
+                              //   SizedBox(height: 20.h),
+                              //   Text(
+                              //     'Select Rack',
+                              //     style: textFieldStyle(
+                              //       color: Colors.black,
+                              //       fontSize: 26.sp,
+                              //       weight: FontWeight.w600,
+                              //     ),
+                              //   ),
+                              //   SizedBox(height: 10.h),
+                              //   Container(
+                              //     margin: EdgeInsets.only(
+                              //       right: 20.w,
+                              //       left: 20.w,
+                              //       bottom: 20.h,
+                              //     ),
+                              //     decoration: BoxDecoration(
+                              //       border: Border.all(
+                              //         color: Colors.grey,
+                              //         width: 2,
+                              //       ),
+                              //       borderRadius: BorderRadius.circular(10),
+                              //     ),
+                              //     padding: EdgeInsets.symmetric(
+                              //       horizontal: 15.w,
+                              //     ),
+                              //     child: DropdownButtonHideUnderline(
+                              //       child: _buildBinDropdown(
+                              //         item.binList,
+                              //         item.selectedBin,
+                              //         item.setSelectedBin,
+                              //       ),
+                              //     ),
+                              //   ),
+                              // ],
 
-                              Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(horizontal: 15.w),
-                                child: DropdownButtonHideUnderline(
-                                  child: _buildLocationDropdown(
-                                    item.locationList,
-                                    item.selectedLocationss,
-                                    (String? value) async {
-                                      if (value == null) return;
-                                      item.setSelectedLocation(value);
-                                      await item.getBin(widget.location, value);
-                                    },
-                                  ),
-                                ),
-                              ),
-
-                              if (item.binList.isNotEmpty) ...[
-                                SizedBox(height: 20.h),
+                              // if (item.rackList.isNotEmpty) ...[
+                              //   SizedBox(height: 20.h),
+                              //   Text(
+                              //     'Select Bin',
+                              //     style: textFieldStyle(
+                              //       color: Colors.black,
+                              //       fontSize: 26.sp,
+                              //       weight: FontWeight.w600,
+                              //     ),
+                              //   ),
+                              //   SizedBox(height: 10.h),
+                              //   Container(
+                              //     decoration: BoxDecoration(
+                              //       border: Border.all(
+                              //         color: Colors.grey,
+                              //         width: 2,
+                              //       ),
+                              //       borderRadius: BorderRadius.circular(10),
+                              //     ),
+                              //     padding: EdgeInsets.symmetric(
+                              //       horizontal: 15.w,
+                              //     ),
+                              //     child: DropdownButtonHideUnderline(
+                              //       child: _buildRackDropdown(
+                              //         item.rackList,
+                              //         item.selectedRack,
+                              //         item.setSelectedRack,
+                              //       ),
+                              //     ),
+                              //   ),
+                              // ],
+                              if (widget.name == "Transfer") ...[
                                 Text(
-                                  'Select Rack',
+                                  'From',
                                   style: textFieldStyle(
                                     color: Colors.black,
                                     fontSize: 26.sp,
@@ -543,11 +641,6 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                 ),
                                 SizedBox(height: 10.h),
                                 Container(
-                                  margin: EdgeInsets.only(
-                                    right: 20.w,
-                                    left: 20.w,
-                                    bottom: 20.h,
-                                  ),
                                   decoration: BoxDecoration(
                                     border: Border.all(
                                       color: Colors.grey,
@@ -559,19 +652,16 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                     horizontal: 15.w,
                                   ),
                                   child: DropdownButtonHideUnderline(
-                                    child: _buildBinDropdown(
-                                      item.binList,
-                                      item.selectedBin,
-                                      item.setSelectedBin,
+                                    child: _buildDepartmentDropdown(
+                                      item.departments,
+                                      item.selectedFromDepartment,
+                                      item.setSelectedFromDepartment,
                                     ),
                                   ),
                                 ),
-                              ],
-
-                              if (item.rackList.isNotEmpty) ...[
                                 SizedBox(height: 20.h),
                                 Text(
-                                  'Select Bin',
+                                  'To',
                                   style: textFieldStyle(
                                     color: Colors.black,
                                     fontSize: 26.sp,
@@ -591,14 +681,16 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                     horizontal: 15.w,
                                   ),
                                   child: DropdownButtonHideUnderline(
-                                    child: _buildRackDropdown(
-                                      item.rackList,
-                                      item.selectedRack,
-                                      item.setSelectedRack,
+                                    child: _buildDepartmentDropdown(
+                                      item.departments,
+                                      item.selectedToDepartment,
+                                      item.setSelectedToDepartment,
                                     ),
                                   ),
                                 ),
+                                SizedBox(height: 20.h),
                               ],
+
                               SizedBox(height: 14.h),
 
                               // Remark text field
@@ -668,6 +760,7 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                         widget.type,
                                         widget.location,
                                         remarkController.text,
+                                        widget.name,
                                       );
                                       if (mounted)
                                         setState(() => _isLoading = false);

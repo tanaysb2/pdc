@@ -7,15 +7,21 @@ import 'package:pdc/Providers/receiving_provider.dart';
 import 'package:pdc/Resuable%20components/app_bar.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
 import 'package:pdc/Resuable%20components/text_field.dart';
-import 'package:pdc/Screens/Receiving_screen.dart/add_receiving_screen.dart';
-import 'package:pdc/Screens/Receiving_screen.dart/receiving_scan_screen.dart';
+import 'package:pdc/Screens/Gate%20in/add_receiving_screen.dart';
+import 'package:pdc/Screens/Gate%20in/receiving_scan_screen.dart';
 import 'package:provider/provider.dart';
 
 // ignore: must_be_immutable
 class ReceivingScreen extends StatefulWidget {
   String location;
   String type;
-  ReceivingScreen({super.key, required this.location, required this.type});
+  String name;
+  ReceivingScreen({
+    super.key,
+    required this.location,
+    required this.type,
+    required this.name,
+  });
 
   @override
   State<ReceivingScreen> createState() => _OrderDispatchScreenState();
@@ -47,31 +53,32 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
     Provider.of<ReceivingProvider>(context, listen: false)
         .fetchDocuments(context, widget.type, "MG", widget.location)
         .then((value) {
-      Provider.of<ReceivingProvider>(
-        // ignore: use_build_context_synchronously
-        context,
-        listen: false,
-        // ignore: use_build_context_synchronously
-      ).fetchDepartments(context, widget.location).then((value) {
-        Provider.of<ReceivingProvider>(
-          // ignore: use_build_context_synchronously
-          context,
-          listen: false,
-          // ignore: use_build_context_synchronously
-        ).fetchCompetitors(context, widget.location).then((value) {
           Provider.of<ReceivingProvider>(
             // ignore: use_build_context_synchronously
             context,
             listen: false,
             // ignore: use_build_context_synchronously
-          ).fetchReasons(context, widget.location);
+          ).fetchDepartments(context, widget.location).then((value) {
+            Provider.of<ReceivingProvider>(
+              // ignore: use_build_context_synchronously
+              context,
+              listen: false,
+              // ignore: use_build_context_synchronously
+            ).fetchCompetitors(context, widget.location).then((value) {
+              Provider.of<ReceivingProvider>(
+                // ignore: use_build_context_synchronously
+                context,
+                listen: false,
+                // ignore: use_build_context_synchronously
+              ).fetchReasons(context, widget.location);
+            });
+          });
+        })
+        .then((value) {
+          setState(() {
+            _isLoading = false;
+          });
         });
-      });
-    }).then((value) {
-      setState(() {
-        _isLoading = false;
-      });
-    });
   }
 
   @override
@@ -154,7 +161,7 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
                   body: Column(
                     children: [
                       CustomAppBar(
-                        text: "Gate In",
+                        text: widget.name,
                         trailingIcon: ClipRRect(
                           borderRadius: BorderRadius.circular(16.w),
                           child: Image.asset(
@@ -175,6 +182,7 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
                               context,
                               refresh,
                               widget.type,
+                              widget.name,
                             );
                           },
                         ),
@@ -197,6 +205,7 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
                             return AddReceivingScreen(
                               location: widget.location,
                               type: widget.type,
+                              name: widget.name,
                             );
                           },
                         ),
@@ -226,26 +235,30 @@ Widget customTile(
   BuildContext context,
   final Function callback,
   String type,
+  String name,
 ) {
   return InkWell(
     onTap: () {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) {
-            return ReceivingScanScreen(
-              document: document,
-              location: location,
-              type: type,
-              pickListnos: '',
-              invoiceNo: '',
-              docType: '',
-              ordType: '',
-            );
-          },
-        ),
-      ).then((value) {
-        callback();
-      });
+      Navigator.of(context)
+          .push(
+            MaterialPageRoute(
+              builder: (context) {
+                return ReceivingScanScreen(
+                  document: document,
+                  location: location,
+                  type: type,
+                  pickListnos: '',
+                  invoiceNo: '',
+                  name: name,
+                  docType: '',
+                  ordType: '',
+                );
+              },
+            ),
+          )
+          .then((value) {
+            callback();
+          });
     },
     child: Container(
       width: double.infinity,

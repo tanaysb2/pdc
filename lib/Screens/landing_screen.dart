@@ -11,8 +11,8 @@ import 'package:pdc/Providers/auth_provider.dart';
 import 'package:pdc/Providers/receiving_provider.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
 import 'package:pdc/Resuable%20components/text_field.dart';
-import 'package:pdc/Screens/Receiving_screen.dart/receiving_screen.dart';
-import 'package:pdc/main.dart'; 
+import 'package:pdc/Screens/Gate%20in/receiving_screen.dart';
+import 'package:pdc/main.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -49,38 +49,39 @@ class _MyAppState extends State<LandingPageScreen> {
     Provider.of<AuthProvider>(context, listen: false)
         .getLocation(context)
         .then((value) {
-      valueSelect = Provider.of<AuthProvider>(
-        context,
-        listen: false,
-      ).locationList[0].locationDesc;
+          valueSelect = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          ).locationList[0].locationDesc;
 
-      forwardValue = Provider.of<AuthProvider>(
-        context,
-        listen: false,
-      ).locationList[0].locationCode;
-      erName = Provider.of<AuthProvider>(
-        context,
-        listen: false,
-      ).locationList[0].locationDesc;
-      setState(() {
-        _isLoading = false;
-      });
-    }).then((value) {
-      Provider.of<ReceivingProvider>(
-        // ignore: use_build_context_synchronously
-        context,
-        listen: false,
-      ).getPurposes(context, forwardValue).then((value) {
-        Provider.of<ReceivingProvider>(
-          // ignore: use_build_context_synchronously
-          context,
-          listen: false,
-        ).fetchModules(context, forwardValue);
-      });
-      setState(() {
-        _isLoading = false;
-      });
-    });
+          forwardValue = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          ).locationList[0].locationCode;
+          erName = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          ).locationList[0].locationDesc;
+          setState(() {
+            _isLoading = false;
+          });
+        })
+        .then((value) {
+          Provider.of<ReceivingProvider>(
+            // ignore: use_build_context_synchronously
+            context,
+            listen: false,
+          ).getPurposes(context, forwardValue).then((value) {
+            Provider.of<ReceivingProvider>(
+              // ignore: use_build_context_synchronously
+              context,
+              listen: false,
+            ).fetchModules(context, forwardValue);
+          });
+          setState(() {
+            _isLoading = false;
+          });
+        });
   }
 
   void clear() {
@@ -253,8 +254,8 @@ class _MyAppState extends State<LandingPageScreen> {
                                     ),
                                   ),
                                   onPressed: () async {
-                                    bool? validate =
-                                        _formKey.currentState!.validate();
+                                    bool? validate = _formKey.currentState!
+                                        .validate();
 
                                     if (validate == true) {
                                       _formKey.currentState!.save();
@@ -265,13 +266,13 @@ class _MyAppState extends State<LandingPageScreen> {
 
                                       bool check =
                                           await Provider.of<AuthProvider>(
-                                        context,
-                                        listen: false,
-                                      ).changePassword(
-                                        oldPasswordController.value.text,
-                                        newPasswordController.value.text,
-                                        context,
-                                      );
+                                            context,
+                                            listen: false,
+                                          ).changePassword(
+                                            oldPasswordController.value.text,
+                                            newPasswordController.value.text,
+                                            context,
+                                          );
 
                                       setState1(() {
                                         _isLoadingInside = false;
@@ -478,16 +479,12 @@ class _MyAppState extends State<LandingPageScreen> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-
-          
-
                             Image.asset(
                               "assets/hometyre.gif",
                               fit: BoxFit.cover,
                               height: 180.h,
                               width: 180.w,
                             ),
-
 
                             SizedBox(width: 10.w),
                             Column(
@@ -546,19 +543,20 @@ class _MyAppState extends State<LandingPageScreen> {
 
                                           log("$valueSelect valueetanay");
 
-                                          LocationClass txerName =
-                                              item.locationList.firstWhere(
-                                            (element) =>
-                                                element.locationDesc ==
-                                                valueSelect,
-                                          );
+                                          LocationClass txerName = item
+                                              .locationList
+                                              .firstWhere(
+                                                (element) =>
+                                                    element.locationDesc ==
+                                                    valueSelect,
+                                              );
                                           forwardValue = txerName.locationCode;
 
                                           String text =
                                               Provider.of<AuthProvider>(
-                                            context,
-                                            listen: false,
-                                          ).locationList[0].locationDesc;
+                                                context,
+                                                listen: false,
+                                              ).locationList[0].locationDesc;
                                           String firstChar = text[0];
 
                                           userId = firstChar;
@@ -571,24 +569,16 @@ class _MyAppState extends State<LandingPageScreen> {
                                 ),
                               ],
                             ),
-                       
-                       
-                          
-
-                          
-                 
-
-
-                       
                           ],
                         ),
                       ),
 
-
-
                       Container(
-                        margin:
-                            EdgeInsets.only(top: 20.h, left: 10.w, right: 10.w),
+                        margin: EdgeInsets.only(
+                          top: 20.h,
+                          left: 10.w,
+                          right: 10.w,
+                        ),
                         width: double.infinity,
                         child: GridView.builder(
                           padding: EdgeInsets.zero,
@@ -596,43 +586,73 @@ class _MyAppState extends State<LandingPageScreen> {
                           shrinkWrap: true,
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 4.w,
-                            mainAxisSpacing: 10.h,
-                            childAspectRatio: 0.9,
-                          ),
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 4.w,
+                                mainAxisSpacing: 10.h,
+                                childAspectRatio: 0.9,
+                              ),
                           itemCount: itemReceiving.modules.length,
                           itemBuilder: (context, index) {
-
-
-
                             final element = itemReceiving.modules[index];
                             return InkWell(
                               onTap: () {
-
-
-                                if (element.moduleName == "Gate In") {
+                                if (element.moduleName == "Gate In" ||
+                                    element.moduleName == "Transfer") {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) {
                                         return ReceivingScreen(
                                           location: forwardValue,
                                           type: element.moduleCode,
+                                          name: element.moduleName,
+                                        );
+                                      },
+                                    ),
+                                  );
+                                } else if (element.moduleName == "Gate Out") {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) {
+                                        return ReceivingScreen(
+                                          location: forwardValue,
+                                          type: element.moduleCode,
+                                          name: element.moduleName,
+                                        );
+                                      },
+                                    ),
+                                  );
+                                } else if (element.moduleName == "Issue") {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) {
+                                        return ReceivingScreen(
+                                          location: forwardValue,
+                                          type: element.moduleCode,
+                                          name: element.moduleName,
+                                        );
+                                      },
+                                    ),
+                                  );
+                                } else if (element.moduleName == "Receive") {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) {
+                                        return ReceivingScreen(
+                                          location: forwardValue,
+                                          type: element.moduleCode,
+                                          name: element.moduleName,
                                         );
                                       },
                                     ),
                                   );
                                 }
-
-
-
                               },
                               child: gridCustom(
                                 element.moduleName == "Gate In"
                                     ? "assets/MM.svg"
                                     : element.moduleName == "Receive"
-                                        ? "assets/return.svg"
-                                        : "assets/inward.svg",
+                                    ? "assets/return.svg"
+                                    : "assets/inward.svg",
                                 element.moduleName,
                                 show: element.moduleName == "Gate In"
                                     ? false
@@ -642,17 +662,9 @@ class _MyAppState extends State<LandingPageScreen> {
                                     : true,
                               ),
                             );
-                       
-                       
-                       
-                       
                           },
                         ),
                       ),
-                   
-                   
-                   
-                   
                     ],
                   ),
                 ),
@@ -676,8 +688,9 @@ Widget gridCustom(
     width: double.infinity,
     padding: EdgeInsets.only(top: detailShow ? 30.h : 10.h),
     decoration: BoxDecoration(
-      color:
-          disable ? Colors.grey.shade400 : Color.fromARGB(255, 215, 237, 255),
+      color: disable
+          ? Colors.grey.shade400
+          : Color.fromARGB(255, 215, 237, 255),
       borderRadius: BorderRadius.circular(6),
     ),
     child: Column(
@@ -724,4 +737,3 @@ Widget gridCustom(
     ),
   );
 }
- 

@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_datawedge/flutter_datawedge.dart'; 
+import 'package:flutter_datawedge/flutter_datawedge.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -18,7 +18,7 @@ import 'package:pdc/Resuable%20components/custom_lablel_dropdown.dart';
 import 'package:pdc/Resuable%20components/custom_searchable_dropdown.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
 import 'package:pdc/Resuable%20components/text_field.dart';
-import 'package:pdc/Screens/Receiving_screen.dart/receiving_screen.dart'; 
+import 'package:pdc/Screens/Gate%20in/receiving_screen.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:vibration/vibration.dart';
@@ -33,6 +33,7 @@ class ReceivingScanScreen extends StatefulWidget {
   String ordType;
   String type;
   String invoiceNo;
+  String name;
   bool bbdn;
   bool nonBbdn;
   String shipmentId;
@@ -49,6 +50,7 @@ class ReceivingScanScreen extends StatefulWidget {
     this.erName = "",
     required this.type,
     this.bbdn = false,
+    required this.name,
     this.nonBbdn = false,
     required this.docType,
     required this.ordType,
@@ -180,25 +182,30 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
 
     stencilFocusNode.addListener(() {
       log("stencil 1");
-      if (Provider.of<ReceivingProvider>(context, listen: false)
-          .stencilIdController
-          .value
-          .text
-          .isNotEmpty) {
+      if (Provider.of<ReceivingProvider>(
+        context,
+        listen: false,
+      ).stencilIdController.value.text.isNotEmpty) {
         if (!stencilFocusNode.hasFocus) {
           log("stencil 2");
           setState(() {
             _isLoading = true;
           });
           log("stencil 3");
-          Provider.of<ReceivingProvider>(context, listen: false)
-              .stencilVerficationForAddBarcode(
-                  "${Provider.of<ReceivingProvider>(context, listen: false).stencilIdController.value.text}",
-                  materialCode,
-                  plantController.value.text,
-                  widget.location,
-                  "TT",
-                  widget.document.documentNumber);
+          Provider.of<ReceivingProvider>(
+            context,
+            listen: false,
+          ).stencilVerficationForAddBarcode(
+            Provider.of<ReceivingProvider>(
+              context,
+              listen: false,
+            ).stencilIdController.value.text,
+            materialCode,
+            plantController.value.text,
+            widget.location,
+            "TT",
+            widget.document.documentNumber,
+          );
           setState(() {
             _isLoading = false;
           });
@@ -208,28 +215,32 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
 
     Provider.of<ReceivingProvider>(context, listen: false)
         .fetchDocumentDetail(
-            context, widget.document.documentNumber, widget.location)
+          context,
+          widget.document.documentNumber,
+          widget.location,
+        )
         .then((value) {
-      Provider.of<ReceivingProvider>(context, listen: false)
-          .getPlants(context)
-          .then((value) {
-        Provider.of<ReceivingProvider>(context, listen: false)
-            .fetchMappingData(context, widget.location)
-            .then((value) {
+          Provider.of<ReceivingProvider>(
+            context,
+            listen: false,
+          ).getPlants(context).then((value) {
+            Provider.of<ReceivingProvider>(
+              context,
+              listen: false,
+            ).fetchMappingData(context, widget.location).then((value) {
+              setState(() {
+                _isLoading = false;
+              });
+            });
+          });
+        })
+        .then((value) {
+          initScannerResult = initScanner();
           setState(() {
             _isLoading = false;
           });
         });
-      });
-    }).then((value) {
-      initScannerResult = initScanner();
-      setState(() {
-        _isLoading = false;
-      });
-    });
   }
-
-
 
   // Future showPlantBox(BuildContext context) async {
   //   final itemSelect = Provider.of<ReceivingProvider>(context, listen: false);
@@ -522,48 +533,60 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
   //   });
   // }
 
-
-
   Future<void> initScanner() async {
     if (Platform.isAndroid) {
       // final item = Provider.of<ReceivingProvider>(context, listen: false);
       fdw = FlutterDataWedge();
-      onScanResultListener =
-          fdw.onScanResult.listen((result) => setState(() async {
-                scanResults = result;
+      onScanResultListener = fdw.onScanResult.listen(
+        (result) => setState(() async {
+          scanResults = result;
 
-                if (isTrue) {
-                  Provider.of<ReceivingProvider>(context, listen: false)
-                      .getManualBarcode(result.data);
-                }
+          if (isTrue) {
+            Provider.of<ReceivingProvider>(
+              context,
+              listen: false,
+            ).getManualBarcode(result.data);
+          }
 
-                if (isTrue == false)
-                  await Provider.of<ReceivingProvider>(context, listen: false)
-                      .scanBarcode(result.data, widget.document.documentNumber,
-                          widget.type, widget.location, "", '', context,
-                          removeBarcode: removeCheck)
-                      .then((value) {
-                    if (value) {
-                      if (isTrue == false)
-                        Provider.of<ReceivingProvider>(context, listen: false)
-                            .fetchDocumentDetail(
-                                context,
-                                widget.document.documentNumber,
-                                widget.location);
-                      //// response 200x
-                      checkSuccess = 1;
-                      setState(() {});
-                      //// response 200
-                    } else {
-                      checkSuccess = 2;
-                      setState(() {});
-                      //// response 400
-                    }
-                  });
-              }));
+          if (isTrue == false)
+            await Provider.of<ReceivingProvider>(context, listen: false)
+                .scanBarcode(
+                  result.data,
+                  widget.document.documentNumber,
+                  widget.type,
+                  widget.location,
+                  "",
+                  '',
+                  context,
+                  removeBarcode: removeCheck,
+                )
+                .then((value) {
+                  if (value) {
+                    if (isTrue == false)
+                      Provider.of<ReceivingProvider>(
+                        context,
+                        listen: false,
+                      ).fetchDocumentDetail(
+                        context,
+                        widget.document.documentNumber,
+                        widget.location,
+                      );
+                    //// response 200x
+                    checkSuccess = 1;
+                    setState(() {});
+                    //// response 200
+                  } else {
+                    checkSuccess = 2;
+                    setState(() {});
+                    //// response 400
+                  }
+                });
+        }),
+      );
 
       onScannerStatusListener = fdw.onScannerStatus.listen(
-          (status) => setState(() => lastStatus = status.status.toString()));
+        (status) => setState(() => lastStatus = status.status.toString()),
+      );
       await fdw.initialize();
     }
   }
@@ -587,15 +610,21 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
             backgroundColor: Colors.white,
             body: Column(
               children: [
-                Container(
+                SizedBox(
                   height: 1115.h,
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        CustomAppBar(text: 'Gate In'),
+                        CustomAppBar(text: widget.name),
                         SizedBox(height: 15.h),
-                        customTile(widget.document, widget.location, context,
-                            () {}, "COMPLETED QA CAGE LIST"),
+                        customTile(
+                          widget.document,
+                          widget.location,
+                          context,
+                          () {},
+                          "COMPLETED QA CAGE LIST",
+                          widget.name,
+                        ),
 
                         // Container(
                         //   width: double.infinity,
@@ -939,7 +968,6 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                         //     ],
                         //   ),
                         // ),
-                      
                         SizedBox(height: 10.h),
 
                         //////
@@ -963,8 +991,8 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                                 color: checkSuccess == 0
                                     ? Colors.grey
                                     : checkSuccess == 1
-                                        ? Color.fromARGB(255, 15, 122, 19)
-                                        : Color.fromARGB(255, 239, 36, 22),
+                                    ? Color.fromARGB(255, 15, 122, 19)
+                                    : Color.fromARGB(255, 239, 36, 22),
                                 width: checkSuccess == 0 ? 1 : 6,
                               ),
                             ),
@@ -1093,7 +1121,6 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                         //               weight: FontWeight.w700,
                         //               fontSize: 30.sp))),
                         // ),
-
                         SizedBox(height: 20.h),
                         ...(item.documentDetail)
                             .map(
@@ -1114,19 +1141,22 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20.w,
+                      vertical: 20.h,
+                    ),
                     decoration: BoxDecoration(
-                        border: Border.all(color: Colors.white),
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black,
-                            offset: Offset(0.0, 0.4), //(x,y)
-                            blurRadius: 0.6,
-                          ),
-                        ],
-                        borderRadius: BorderRadius.circular(8)),
+                      border: Border.all(color: Colors.white),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black,
+                          offset: Offset(0.0, 0.4), //(x,y)
+                          blurRadius: 0.6,
+                        ),
+                      ],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: InkWell(
                       onTap: () async {
                         await showDialog(
@@ -1134,7 +1164,8 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                           builder: (BuildContext context) {
                             return AlertDialog(
                               content: Text(
-                                  'Are you sure you want to Mark As Complete?'),
+                                'Are you sure you want to Mark As Complete?',
+                              ),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () async {
@@ -1143,10 +1174,11 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                                     });
 
                                     bool check = await item.markAsCompleted(
-                                        widget.document.documentNumber,
-                                        widget.location,
-                                        'TT',
-                                        context);
+                                      widget.document.documentNumber,
+                                      widget.location,
+                                      'TT',
+                                      context,
+                                    );
                                     if (check) {
                                       Navigator.of(context).pop("yesload");
                                     }
@@ -1161,8 +1193,9 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                                 TextButton(
                                   onPressed: () {
                                     // Handle "No" button tap
-                                    Navigator.of(context).pop(
-                                        false); // Return false to the caller
+                                    Navigator.of(
+                                      context,
+                                    ).pop(false); // Return false to the caller
                                   },
                                   child: Text('No'),
                                 ),
@@ -1175,15 +1208,20 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Text("Mark as Completed",
-                              style: textFieldStyle(
-                                  color: Color.fromARGB(255, 1, 77, 138),
-                                  fontSize: 28.sp,
-                                  weight: FontWeight.w700)),
+                          Text(
+                            "Mark as Completed",
+                            style: textFieldStyle(
+                              color: Color.fromARGB(255, 1, 77, 138),
+                              fontSize: 28.sp,
+                              weight: FontWeight.w700,
+                            ),
+                          ),
                           SizedBox(width: 10.w),
-                          Icon(Icons.arrow_forward_ios,
-                              size: 30.sp,
-                              color: Color.fromARGB(255, 1, 77, 138))
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 30.sp,
+                            color: Color.fromARGB(255, 1, 77, 138),
+                          ),
                         ],
                       ),
                     ),
@@ -1319,5 +1357,3 @@ Widget customTileDown(
     ),
   );
 }
-
- 
