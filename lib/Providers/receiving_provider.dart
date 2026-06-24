@@ -346,8 +346,8 @@ class ReceivingProvider with ChangeNotifier {
     }
   }
 
-  /// Submits the Add Receiving form: calls [createDocument] with current dropdown values and [remark], then resets form on success.
-  Future<bool> submitAddReceiving(
+  /// Submits the Add Receiving form. Returns the created [DocumentData] on success.
+  Future<DocumentData?> submitAddReceiving(
     BuildContext context,
     String docType,
     String location,
@@ -377,7 +377,7 @@ class ReceivingProvider with ChangeNotifier {
         "Please fill all required fields",
         maskType: EasyLoadingMaskType.black,
       );
-      return false;
+      return null;
     }
 
     log("includeDepartment: $departmentCode");
@@ -413,10 +413,36 @@ class ReceivingProvider with ChangeNotifier {
         includeDepartment ? departmentCode : 'MG',
         location,
       );
-      if (context.mounted) Navigator.of(context).pop();
-      return true;
+      return _documentFromCreateResult(result, pendingDocuments);
     }
-    return false;
+    return null;
+  }
+
+  DocumentData? _documentFromCreateResult(
+    Map<String, dynamic> result,
+    List<DocumentData> pendingDocuments,
+  ) {
+    final data = result['data'];
+    if (data is Map<String, dynamic>) {
+      return DocumentData.fromJson(data);
+    }
+    if (data is List && data.isNotEmpty) {
+      return DocumentData.fromJson(data.first as Map<String, dynamic>);
+    }
+
+    final docNo = result['documentNumber'] ?? result['DocNo'];
+    if (docNo != null) {
+      for (final document in pendingDocuments) {
+        if (document.documentNumber == docNo.toString()) {
+          return document;
+        }
+      }
+    }
+
+    if (pendingDocuments.isNotEmpty) {
+      return pendingDocuments.first;
+    }
+    return null;
   }
 
   void dateEmpty() {

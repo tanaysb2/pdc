@@ -8,10 +8,12 @@ import 'package:pdc/Modules/department_model.dart';
 import 'package:pdc/Modules/purpose_modal.dart';
 import 'package:pdc/Modules/rack_model.dart';
 import 'package:pdc/Modules/reasons_model.dart';
+import 'package:pdc/Modules/document_modal.dart';
 import 'package:pdc/Providers/receiving_provider.dart';
 import 'package:pdc/Resuable%20components/app_bar.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
 import 'package:pdc/Resuable%20components/text_field.dart';
+import 'package:pdc/Screens/Gate%20in/receiving_scan_screen.dart';
 import 'package:provider/provider.dart';
 
 class AddReceivingScreen extends StatefulWidget {
@@ -755,17 +757,35 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                   onPressed: () async {
                                     if (_formKey.currentState!.validate()) {
                                       setState(() => _isLoading = true);
-                                      final ok = await item.submitAddReceiving(
+                                      final document =
+                                          await item.submitAddReceiving(
                                         context,
                                         widget.type,
                                         widget.location,
                                         remarkController.text,
                                         widget.name,
                                       );
-                                      if (mounted)
+                                      if (mounted) {
                                         setState(() => _isLoading = false);
-                                      if (ok && mounted) {
+                                      }
+                                      if (document != null && mounted) {
                                         remarkController.clear();
+                                        Navigator.of(context).pushReplacement(
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return ReceivingScanScreen(
+                                                document: document,
+                                                location: widget.location,
+                                                type: widget.type,
+                                                pickListnos: '',
+                                                invoiceNo: '',
+                                                name: widget.name,
+                                                docType: '',
+                                                ordType: '',
+                                              );
+                                            },
+                                          ),
+                                        );
                                       }
                                     }
                                   },
