@@ -2,13 +2,10 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pdc/Modules/bin_model.dart';
 import 'package:pdc/Modules/competitors_model.dart';
 import 'package:pdc/Modules/department_model.dart';
 import 'package:pdc/Modules/purpose_modal.dart';
-import 'package:pdc/Modules/rack_model.dart';
 import 'package:pdc/Modules/reasons_model.dart';
-import 'package:pdc/Modules/document_modal.dart';
 import 'package:pdc/Providers/receiving_provider.dart';
 import 'package:pdc/Resuable%20components/app_bar.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
@@ -757,14 +754,14 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                   onPressed: () async {
                                     if (_formKey.currentState!.validate()) {
                                       setState(() => _isLoading = true);
-                                      final document =
-                                          await item.submitAddReceiving(
-                                        context,
-                                        widget.type,
-                                        widget.location,
-                                        remarkController.text,
-                                        widget.name,
-                                      );
+                                      final document = await item
+                                          .submitAddReceiving(
+                                            context,
+                                            widget.type,
+                                            widget.location,
+                                            remarkController.text,
+                                            widget.name,
+                                          );
                                       if (mounted) {
                                         setState(() => _isLoading = false);
                                       }
