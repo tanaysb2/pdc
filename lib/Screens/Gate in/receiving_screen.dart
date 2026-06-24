@@ -89,19 +89,54 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
   }
 
   void refresh() {
-    // print("object");
-    // setState(() {
-    //   _isLoading = true;
-    // });
+    setState(() {
+      _isLoading = true;
+    });
 
-    // Provider.of<QacageProvider>(
-    //   context,
-    //   listen: false,
-    // ).getQaList(widget.location).then((value) {
-    //   setState(() {
-    //     _isLoading = false;
-    //   });
-    // });
+    Provider.of<ReceivingProvider>(
+      context,
+      listen: false,
+    ).fetchDocuments(context, widget.type, "MG", widget.location).then((_) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  }
+
+  Widget _buildDocumentList(
+    List<DocumentData> documents,
+    ReceivingProvider item, {
+    bool isCompletedTab = false,
+  }) {
+    if (documents.isEmpty) {
+      return Center(
+        child: Text(
+          "No documents found",
+          style: textFieldStyle(
+            color: Colors.grey.shade600,
+            fontSize: 28.sp,
+            weight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: documents.length,
+      itemBuilder: (context, index) {
+        return customTile(
+          documents[index],
+          widget.location,
+          context,
+          refresh,
+          widget.type,
+          widget.name,
+          isCompletedTab: isCompletedTab,
+        );
+      },
+    );
   }
 
   @override
@@ -116,7 +151,7 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
             children: [
               Scaffold(
                 backgroundColor: Colors.grey.shade400,
-                body: Container(
+                body: SizedBox(
                   width: double.infinity,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -172,19 +207,32 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
                           ),
                         ),
                       ),
+                      TabBar(
+                        controller: _tabController,
+                        labelColor: const Color.fromARGB(255, 1, 77, 138),
+                        unselectedLabelColor: Colors.grey.shade600,
+                        indicatorColor: const Color.fromARGB(255, 1, 77, 138),
+                        labelStyle: textFieldStyle(
+                          fontSize: 26.sp,
+                          weight: FontWeight.w700,
+                        ),
+                        unselectedLabelStyle: textFieldStyle(
+                          fontSize: 26.sp,
+                          weight: FontWeight.w500,
+                        ),
+                        tabs: const [
+                          Tab(text: "Pending"),
+                          Tab(text: "Completed"),
+                        ],
+                      ),
                       Expanded(
-                        child: ListView.builder(
-                          itemCount: item.documents.length,
-                          itemBuilder: (context, index) {
-                            return customTile(
-                              item.documents[index],
-                              widget.location,
-                              context,
-                              refresh,
-                              widget.type,
-                              widget.name,
-                            );
-                          },
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildDocumentList(item.pendingDocuments, item),
+                            _buildDocumentList(item.completedDocuments, item,
+                                isCompletedTab: true),
+                          ],
                         ),
                       ),
                     ],
@@ -199,7 +247,7 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
                       ),
                     ),
                     onPressed: () async {
-                      Navigator.of(context).push(
+                      await Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) {
                             return AddReceivingScreen(
@@ -210,6 +258,7 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
                           },
                         ),
                       );
+                      refresh();
                     },
                     child: Text(
                       "Add Document",
@@ -235,10 +284,15 @@ Widget customTile(
   BuildContext context,
   final Function callback,
   String type,
-  String name,
-) {
+  String name, {
+  bool isCompletedTab = false,
+  bool enableNavigation = true,
+}) {
+  final item = Provider.of<ReceivingProvider>(context, listen: true);
+  log("document.oth1: ${type}");
   return InkWell(
-    onTap: () {
+    onTap: enableNavigation
+        ? () {
       Navigator.of(context)
           .push(
             MaterialPageRoute(
@@ -252,14 +306,15 @@ Widget customTile(
                   name: name,
                   docType: '',
                   ordType: '',
+                  isCompletedTab: isCompletedTab,
+                  onMarkedComplete: () => callback(),
                 );
               },
             ),
           )
-          .then((value) {
-            callback();
-          });
-    },
+          .then((_) => callback());
+    }
+        : null,
     child: Container(
       width: double.infinity,
 
@@ -343,61 +398,160 @@ Widget customTile(
                       ],
                     ),
                     SizedBox(height: 3.h),
-                    Row(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Company",
-                              style: textFieldStyle(
-                                color: Colors.grey.shade800,
-                                fontSize: 26.sp,
-                                weight: FontWeight.w500,
+
+                    if (type == "GI") ...[
+                      Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Company",
+                                style: textFieldStyle(
+                                  color: Colors.grey.shade800,
+                                  fontSize: 26.sp,
+                                  weight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 3.h),
-                            SizedBox(
-                              width: 320.w,
-                              child: Text(
-                                document.competitorCode ?? "",
-                                maxLines: 2,
+                              SizedBox(height: 3.h),
+                              SizedBox(
+                                width: 320.w,
+                                child: Text(
+                                  document.competitorCode ?? "",
+                                  maxLines: 2,
+                                  style: textFieldStyle(
+                                    color: Color.fromARGB(255, 1, 77, 138),
+                                    fontSize: 28.sp,
+                                    weight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 10.h),
+                            ],
+                          ),
+                          SizedBox(width: 40.w),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Purpose",
+                                style: textFieldStyle(
+                                  color: Colors.grey.shade800,
+                                  fontSize: 26.sp,
+                                  weight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 3.h),
+                              Text(
+                                document.oth1?.isNotEmpty ?? false
+                                    ? item.purposes
+                                          .firstWhere(
+                                            (element) =>
+                                                element.purposeCode ==
+                                                document.oth1,
+                                          )
+                                          .purposeName
+                                    : "",
+                                // document.oth1 ?? "",
                                 style: textFieldStyle(
                                   color: Color.fromARGB(255, 1, 77, 138),
                                   fontSize: 28.sp,
                                   weight: FontWeight.w700,
                                 ),
                               ),
-                            ),
-                            SizedBox(height: 10.h),
-                          ],
-                        ),
-                        SizedBox(width: 40.w),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Purpose",
-                              style: textFieldStyle(
-                                color: Colors.grey.shade800,
-                                fontSize: 26.sp,
-                                weight: FontWeight.w500,
+                              SizedBox(height: 10.h),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+
+                    if (type == "TR") ...[
+                      Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "To Location",
+                                style: textFieldStyle(
+                                  color: Colors.grey.shade800,
+                                  fontSize: 26.sp,
+                                  weight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 3.h),
-                            Text(
-                              document.purposeCode ?? "",
-                              style: textFieldStyle(
-                                color: Color.fromARGB(255, 1, 77, 138),
-                                fontSize: 28.sp,
-                                weight: FontWeight.w700,
+                              SizedBox(height: 3.h),
+                              SizedBox(
+                                width: 320.w,
+                                child: Text(
+                                  document.toDept?.isNotEmpty ?? false
+                                      ? item.departments
+                                            .firstWhere(
+                                              (element) =>
+                                                  element.departmentCode ==
+                                                  document.toDept,
+                                            )
+                                            .departmentName
+                                      : "",
+                                  // document.toDept ?? "",
+                                  maxLines: 2,
+                                  style: textFieldStyle(
+                                    color: Color.fromARGB(255, 1, 77, 138),
+                                    fontSize: 28.sp,
+                                    weight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 10.h),
-                          ],
-                        ),
-                      ],
-                    ),
+                              SizedBox(height: 10.h),
+                            ],
+                          ),
+                          SizedBox(width: 40.w),
+                        ],
+                      ),
+                    ],
+
+                    if (type == "GO") ...[
+                      Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Reason",
+                                style: textFieldStyle(
+                                  color: Colors.grey.shade800,
+                                  fontSize: 26.sp,
+                                  weight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 3.h),
+                              SizedBox(
+                                width: 320.w,
+                                child: Text(
+                                  document.reasonCode?.isNotEmpty ?? false
+                                      ? item.reasons
+                                            .firstWhere(
+                                              (element) =>
+                                                  element.reasonCode ==
+                                                  document.reasonCode,
+                                            )
+                                            .reasonName
+                                      : "",
+                                  maxLines: 2,
+                                  style: textFieldStyle(
+                                    color: Color.fromARGB(255, 1, 77, 138),
+                                    fontSize: 28.sp,
+                                    weight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 10.h),
+                            ],
+                          ),
+                          SizedBox(width: 40.w),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ],

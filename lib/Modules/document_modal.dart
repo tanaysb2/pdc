@@ -1,18 +1,34 @@
 class DocumentResponse {
   final List<DocumentData> data;
+  final List<DocumentData> pendingData;
+  final List<DocumentData> completedData;
 
-  DocumentResponse({required this.data});
+  DocumentResponse({
+    required this.data,
+    required this.pendingData,
+    required this.completedData,
+  });
 
   factory DocumentResponse.fromJson(Map<String, dynamic> json) {
     return DocumentResponse(
-      data: (json['data'] as List)
+      data: (json['data'] as List? ?? [])
+          .map((item) => DocumentData.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      pendingData: (json['pending'] as List? ?? [])
+          .map((item) => DocumentData.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      completedData: (json['completed'] as List? ?? [])
           .map((item) => DocumentData.fromJson(item as Map<String, dynamic>))
           .toList(),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'data': data.map((item) => item.toJson()).toList()};
+    return {
+      'data': data.map((item) => item.toJson()).toList(),
+      'pending': pendingData.map((item) => item.toJson()).toList(),
+      'completed': completedData.map((item) => item.toJson()).toList(),
+    };
   }
 }
 

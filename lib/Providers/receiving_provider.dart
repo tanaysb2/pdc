@@ -30,6 +30,8 @@ class ReceivingProvider with ChangeNotifier {
   final AudioPlayer _player = AudioPlayer();
 
   List<DocumentData> documents = [];
+  List<DocumentData> pendingDocuments = [];
+  List<DocumentData> completedDocuments = [];
   List<DocumentDetailData> documentDetail = [];
   TextEditingController stencilIdController = TextEditingController();
   String errorMessage = "";
@@ -271,61 +273,75 @@ class ReceivingProvider with ChangeNotifier {
   }
 
   Future<bool> markAsCompleted(
-    String picklistNo,
+    String documentNumber,
     String location,
-    String orderType,
+    String docType,
     BuildContext context,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final txtoken = prefs.getString("userToken");
-    var headers = {'Authorization': 'Bearer $txtoken'};
-    var request = Request(
-      'POST',
-      Uri.parse(
-        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.markAsCompletedForPhysicalInventory}',
-      ),
-    );
-    request.body = json.encode({
-      "pickListNo": picklistNo.trimRight(),
-      "location": location.trimRight(),
-      "orderType": orderType.trimRight(),
-    });
-    request.headers.addAll(headers);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final txtoken = prefs.getString("userToken");
+      if (txtoken == null || txtoken.isEmpty) {
+        return false;
+      }
 
-    StreamedResponse response = await request.send().timeout(
-      Duration(seconds: 60),
-    );
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $txtoken',
+      };
+      final request = Request(
+        'POST',
+        Uri.parse(
+          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}/$documentNumber/complete?location=$location',
+        ),
+      );
+      request.body = json.encode({
+        "docType": docType.trimRight(),
+        "location": location.trimRight(),
+      });
+      request.headers.addAll(headers);
 
-    if (response.statusCode == 200) {
-      bool? checkVibrate = await Vibration.hasVibrator();
-      final xyz = await response.stream.bytesToString();
-      if (checkVibrate) Vibration.vibrate();
-      AudioPlayer().play(AssetSource('audio/sound.wav'));
-
-      final responseData = json.decode(xyz)["message"];
-
-      await EasyLoading.showToast(
-        responseData.toString(),
-        maskType: EasyLoadingMaskType.black,
-        duration: Duration(milliseconds: 600),
-        dismissOnTap: true,
+      final response = await request.send().timeout(
+        const Duration(seconds: 60),
       );
 
-      notifyListeners();
+      if (response.statusCode == 200) {
+        bool? checkVibrate = await Vibration.hasVibrator();
+        final xyz = await response.stream.bytesToString();
+        if (checkVibrate == true) Vibration.vibrate();
+        AudioPlayer().play(AssetSource('audio/sound.wav'));
 
-      return true;
-    } else {
-      bool? checkVibrate = await Vibration.hasVibrator();
-      final xyz = await response.stream.bytesToString();
-      if (checkVibrate) Vibration.vibrate();
-      AudioPlayer().play(AssetSource('audio/error.wav'));
+        final responseData = json.decode(xyz)["message"];
 
-      final responseData = json.decode(xyz)["message"];
+        await EasyLoading.showToast(
+          responseData.toString(),
+          maskType: EasyLoadingMaskType.black,
+          duration: const Duration(milliseconds: 600),
+          dismissOnTap: true,
+        );
 
-      showDialogForallDialog(context, responseData.toString());
+        notifyListeners();
 
-      notifyListeners();
+        return true;
+      } else {
+        bool? checkVibrate = await Vibration.hasVibrator();
+        final xyz = await response.stream.bytesToString();
+        if (checkVibrate == true) Vibration.vibrate();
+        AudioPlayer().play(AssetSource('audio/error.wav'));
 
+        final responseData = json.decode(xyz)["message"];
+
+        showDialogForallDialog(context, responseData.toString());
+
+        notifyListeners();
+
+        return false;
+      }
+    } catch (e) {
+      EasyLoading.showToast(
+        "Connectivity issue, Please try again",
+        maskType: EasyLoadingMaskType.black,
+      );
       return false;
     }
   }
@@ -342,15 +358,12 @@ class ReceivingProvider with ChangeNotifier {
     final reasonCode = selectedReason ?? '';
     final departmentCode = selectedDepartment ?? '';
     final storageLocation = selectedLocationss ?? '';
-    final includeDepartment =
-        screenName == "Issue" || screenName == "Receive";
+    final includeDepartment = screenName == "Issue" || screenName == "Receive";
     final includeTransferDepartments = screenName == "Transfer";
     final fromDepartment = selectedFromDepartment ?? '';
     final toDepartment = selectedToDepartment ?? '';
-    final includePurpose =
-        screenName != "Gate Out" && screenName != "Transfer";
-    final includeReason =
-        screenName != "Gate In" && screenName != "Transfer";
+    final includePurpose = screenName != "Gate Out" && screenName != "Transfer";
+    final includeReason = screenName != "Gate In" && screenName != "Transfer";
     // final binCode = selectedBin ?? '';
     // final rackCode = selectedRack ?? '';
 
@@ -370,9 +383,7 @@ class ReceivingProvider with ChangeNotifier {
     log("includeDepartment: $departmentCode");
 
     String competitorCode = '';
-    if (includePurpose &&
-        selectedType == "Others" &&
-        selectedCompany != null) {
+    if (includePurpose && selectedType == "Others" && selectedCompany != null) {
       final list = competitors
           .where((c) => c.competitorName == selectedCompany)
           .toList();
@@ -389,7 +400,7 @@ class ReceivingProvider with ChangeNotifier {
       // binCode: binCode,
       // rackCode: rackCode,
       departmentCode: includeDepartment ? departmentCode : null,
-      fromDepartment: includeTransferDepartments ? fromDepartment : null,
+      // fromDepartment: includeTransferDepartments ? fromDepartment : null,
       toDepartment: includeTransferDepartments ? toDepartment : null,
       location: location,
       remark: remark.isEmpty ? null : remark,
@@ -482,12 +493,17 @@ class ReceivingProvider with ChangeNotifier {
 
     final request = Request(
       'GET',
+
       // Uri.parse(
       //   '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}?documentType=$documentType&departmentCode=MG&location=$location',
       // ),
       Uri.parse(
         '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}?docType=$documentType&location=$location',
       ),
+    );
+
+    log(
+      '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}?docType=$documentType&location=$location',
     );
 
     request.headers.addAll(headers);
@@ -498,8 +514,12 @@ class ReceivingProvider with ChangeNotifier {
       final body = await response.stream.bytesToString();
       final Map<String, dynamic> jsonData = json.decode(body);
 
+      log("jsonData: $jsonData");
+
       final documentResponse = DocumentResponse.fromJson(jsonData);
       documents = documentResponse.data;
+      pendingDocuments = documentResponse.pendingData;
+      completedDocuments = documentResponse.completedData;
       notifyListeners();
       return true;
     } else {
@@ -605,9 +625,7 @@ class ReceivingProvider with ChangeNotifier {
         departments = departmentResponse.data;
         if (departments.isNotEmpty) {
           if (selectedDepartment == null ||
-              !departments.any(
-                (d) => d.departmentCode == selectedDepartment,
-              )) {
+              !departments.any((d) => d.departmentCode == selectedDepartment)) {
             selectedDepartment = departments.first.departmentCode;
           }
           if (selectedFromDepartment == null ||

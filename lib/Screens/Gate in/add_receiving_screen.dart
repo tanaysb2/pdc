@@ -297,8 +297,7 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
         widget.name == "Gate Out" || widget.name == "Transfer";
     final showCompanyType = !hideCompanyAndPurpose;
     final showPurpose = !hideCompanyAndPurpose;
-    final showReason =
-        widget.name != "Gate In" && widget.name != "Transfer";
+    final showReason = widget.name != "Gate In" && widget.name != "Transfer";
     log("type: ${widget.type}");
     return Scaffold(
       backgroundColor: Colors.white,
@@ -631,35 +630,36 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                               //   ),
                               // ],
                               if (widget.name == "Transfer") ...[
-                                Text(
-                                  'From',
-                                  style: textFieldStyle(
-                                    color: Colors.black,
-                                    fontSize: 26.sp,
-                                    weight: FontWeight.w600,
-                                  ),
-                                ),
-                                SizedBox(height: 10.h),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Colors.grey,
-                                      width: 2,
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 15.w,
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: _buildDepartmentDropdown(
-                                      item.departments,
-                                      item.selectedFromDepartment,
-                                      item.setSelectedFromDepartment,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 20.h),
+                                // Text(
+                                //   'From',
+                                //   style: textFieldStyle(
+                                //     color: Colors.black,
+                                //     fontSize: 26.sp,
+                                //     weight: FontWeight.w600,
+                                //   ),
+                                // ),
+                                // // SizedBox(height: 10.h),
+                                // Container(
+                                //   decoration: BoxDecoration(
+                                //     border: Border.all(
+                                //       color: Colors.grey,
+                                //       width: 2,
+                                //     ),
+                                //     borderRadius: BorderRadius.circular(10),
+                                //   ),
+                                //   padding: EdgeInsets.symmetric(
+                                //     horizontal: 15.w,
+                                //   ),
+                                //   child: DropdownButtonHideUnderline(
+                                //     child: _buildDepartmentDropdown(
+                                //       item.departments,
+                                //       item.selectedFromDepartment,
+                                //       item.setSelectedFromDepartment,
+                                //     ),
+                                //   ),
+                                // ),
+
+                                // SizedBox(height: 20.h),
                                 Text(
                                   'To',
                                   style: textFieldStyle(

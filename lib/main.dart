@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -71,7 +73,7 @@ class _NavigationState extends State<NavigationScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("userToken");
     final userId = prefs.getString("usrid");
-    print(token);
+    log("$token $userId token");
     // await prefs.clear();
     // SharedPreferences prefs = await SharedPreferences.getInstance();
     // final token = prefs.getString("userToken");

@@ -39,6 +39,8 @@ class ReceivingScanScreen extends StatefulWidget {
   String shipmentId;
   String title;
   String userId;
+  bool isCompletedTab;
+  VoidCallback? onMarkedComplete;
   ReceivingScanScreen({
     super.key,
     required this.document,
@@ -55,6 +57,8 @@ class ReceivingScanScreen extends StatefulWidget {
     required this.docType,
     required this.ordType,
     this.userId = "",
+    this.isCompletedTab = false,
+    this.onMarkedComplete,
   });
 
   @override
@@ -235,7 +239,9 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
           });
         })
         .then((value) {
-          initScannerResult = initScanner();
+          if (!widget.isCompletedTab) {
+            initScannerResult = initScanner();
+          }
           setState(() {
             _isLoading = false;
           });
@@ -548,7 +554,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
             ).getManualBarcode(result.data);
           }
 
-          if (isTrue == false)
+          if (isTrue == false) {
             await Provider.of<ReceivingProvider>(context, listen: false)
                 .scanBarcode(
                   result.data,
@@ -562,7 +568,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                 )
                 .then((value) {
                   if (value) {
-                    if (isTrue == false)
+                    if (isTrue == false) {
                       Provider.of<ReceivingProvider>(
                         context,
                         listen: false,
@@ -571,6 +577,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                         widget.document.documentNumber,
                         widget.location,
                       );
+                    }
                     //// response 200x
                     checkSuccess = 1;
                     setState(() {});
@@ -581,6 +588,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                     //// response 400
                   }
                 });
+          }
         }),
       );
 
@@ -599,6 +607,62 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
     super.dispose();
   }
 
+  Future<void> _handleMarkAsComplete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          content: const Text('Are you sure you want to Mark As Complete?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Yes'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('No'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final provider = Provider.of<ReceivingProvider>(context, listen: false);
+      final check = await provider.markAsCompleted(
+        widget.document.documentNumber,
+        widget.location,
+        widget.type,
+        context,
+      );
+
+      if (!mounted) return;
+
+      if (check) {
+        await provider.fetchDocuments(
+          context,
+          widget.type,
+          "MG",
+          widget.location,
+        );
+        if (!mounted) return;
+        Navigator.of(context).pop(true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = Provider.of<ReceivingProvider>(context, listen: true);
@@ -610,8 +674,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
             backgroundColor: Colors.white,
             body: Column(
               children: [
-                SizedBox(
-                  height: 1115.h,
+                Expanded(
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
@@ -622,358 +685,19 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                           widget.location,
                           context,
                           () {},
-                          "COMPLETED QA CAGE LIST",
+                          widget.type,
                           widget.name,
+                          isCompletedTab: widget.isCompletedTab,
+                          enableNavigation: false,
                         ),
 
-                        // Container(
-                        //   width: double.infinity,
-                        //   padding: EdgeInsets.only(top: 20.h),
-                        //   margin: EdgeInsets.symmetric(
-                        //     horizontal: 30.w,
-                        //     vertical: 4.h,
-                        //   ),
-                        //   decoration: BoxDecoration(
-                        //     // border: Border.all(color: Colors.white),
-                        //     color: Colors.white,
-                        //     boxShadow: [
-                        //       BoxShadow(
-                        //         color: Colors.black,
-                        //         offset: Offset(0.0, 0.4), //(x,y)
-                        //         blurRadius: 0.6,
-                        //       ),
-                        //     ],
-                        //     borderRadius: BorderRadius.circular(8),
-                        //   ),
-                        //   child: Column(
-                        //     children: [
-                        //       Container(
-                        //         padding: EdgeInsets.only(
-                        //           right: 16.w,
-                        //           left: 16.w,
-                        //           top: 20.h,
-                        //         ),
-                        //         child: Row(
-                        //           children: [
-                        //             Column(
-                        //               crossAxisAlignment:
-                        //                   CrossAxisAlignment.start,
-                        //               children: [
-                        //                 InkWell(
-                        //                   onTap: () {
-                        //                     // tempScan();
-                        //                   },
-                        //                   child: Text(
-                        //                     "Order#",
-                        //                     style: textFieldStyle(
-                        //                       color: Colors.grey.shade800,
-                        //                       fontSize: 26.sp,
-                        //                       weight: FontWeight.w500,
-                        //                     ),
-                        //                   ),
-                        //                 ),
-                        //                 SizedBox(height: 3.h),
-                        //                 Container(
-                        //                   width: 210.w,
-                        //                   child: Text(
-                        //                     widget.pickListnos,
-                        //                     maxLines: 2,
-                        //                     style: textFieldStyle(
-                        //                       color: Color.fromARGB(
-                        //                         255,
-                        //                         1,
-                        //                         77,
-                        //                         138,
-                        //                       ),
-                        //                       fontSize: 34.sp,
-                        //                       weight: FontWeight.w700,
-                        //                     ),
-                        //                   ),
-                        //                 ),
-                        //                 SizedBox(height: 10.h),
-                        //               ],
-                        //             ),
-                        //             Spacer(),
-                        //             Column(
-                        //               crossAxisAlignment:
-                        //                   CrossAxisAlignment.start,
-                        //               children: [
-                        //                 Text(
-                        //                   "Total Items",
-                        //                   style: textFieldStyle(
-                        //                     color: Colors.grey.shade800,
-                        //                     fontSize: 26.sp,
-                        //                     weight: FontWeight.w500,
-                        //                   ),
-                        //                 ),
-                        //                 SizedBox(height: 3.h),
-                        //                 Text(
-                        //                   _isLoading
-                        //                       ? ""
-                        //                       : item.singleOrderList.length
-                        //                             .toString(),
-                        //                   style: textFieldStyle(
-                        //                     color: Color.fromARGB(
-                        //                       255,
-                        //                       1,
-                        //                       77,
-                        //                       138,
-                        //                     ),
-                        //                     fontSize: 34.sp,
-                        //                     weight: FontWeight.w700,
-                        //                   ),
-                        //                 ),
-                        //                 SizedBox(height: 10.h),
-                        //               ],
-                        //             ),
-                        //             Spacer(),
-                        //             if (item.singleOrderList.isNotEmpty)
-                        //               Text(
-                        //                 _isLoading
-                        //                     ? ""
-                        //                     : "${item.singleOrderList[0].scanned}/${item.singleOrderList[0].total}",
-                        //                 style: textFieldStyle(
-                        //                   color: Color.fromARGB(
-                        //                     255,
-                        //                     1,
-                        //                     77,
-                        //                     138,
-                        //                   ),
-                        //                   fontSize: 52.sp,
-                        //                   weight: FontWeight.w700,
-                        //                 ),
-                        //               ),
-                        //             Icon(Icons.person_2_outlined, size: 55.sp),
-                        //             Spacer(),
-                        //           ],
-                        //         ),
-                        //       ),
-                        //       SizedBox(height: 25.h),
-                        //       if (widget.bbdn)
-                        //         Container(
-                        //           margin: EdgeInsets.only(left: 20.w),
-                        //           child: Row(
-                        //             children: [
-                        //               Text(
-                        //                 "Invoice no:",
-                        //                 style: textFieldStyle(
-                        //                   color: Colors.grey.shade800,
-                        //                   fontSize: 26.sp,
-                        //                   weight: FontWeight.w500,
-                        //                 ),
-                        //               ),
-                        //               SizedBox(width: 17.h),
-                        //               Container(
-                        //                 width: 400.w,
-                        //                 child: Text(
-                        //                   widget.invoiceNo,
-                        //                   style: textFieldStyle(
-                        //                     color: Color.fromARGB(
-                        //                       255,
-                        //                       1,
-                        //                       77,
-                        //                       138,
-                        //                     ),
-                        //                     fontSize: 28.sp,
-                        //                     weight: FontWeight.w700,
-                        //                   ),
-                        //                 ),
-                        //               ),
-                        //             ],
-                        //           ),
-                        //         ),
-                        //       SizedBox(height: 16.h),
-                        //       if (widget.bbdn)
-                        //         Container(
-                        //           margin: EdgeInsets.only(left: 20.w),
-                        //           child: Row(
-                        //             children: [
-                        //               Text(
-                        //                 "Shipment Id:",
-                        //                 style: textFieldStyle(
-                        //                   color: Colors.grey.shade800,
-                        //                   fontSize: 26.sp,
-                        //                   weight: FontWeight.w500,
-                        //                 ),
-                        //               ),
-                        //               SizedBox(width: 17.h),
-                        //               Container(
-                        //                 width: 400.w,
-                        //                 child: Text(
-                        //                   widget.shipmentId,
-                        //                   style: textFieldStyle(
-                        //                     color: Color.fromARGB(
-                        //                       255,
-                        //                       1,
-                        //                       77,
-                        //                       138,
-                        //                     ),
-                        //                     fontSize: 28.sp,
-                        //                     weight: FontWeight.w700,
-                        //                   ),
-                        //                 ),
-                        //               ),
-                        //             ],
-                        //           ),
-                        //         ),
-                        //       if (widget.bbdn) SizedBox(height: 15.h),
-                        //       if (item
-                        //           .singleOrderList[0]
-                        //           .customerName
-                        //           .isNotEmpty)
-                        //         Container(
-                        //           margin: EdgeInsets.only(
-                        //             left: 20.w,
-                        //             bottom: 20.h,
-                        //           ),
-                        //           child: Row(
-                        //             children: [
-                        //               Text(
-                        //                 "Customer:",
-                        //                 style: textFieldStyle(
-                        //                   color: Colors.grey.shade800,
-                        //                   fontSize: 26.sp,
-                        //                   weight: FontWeight.w500,
-                        //                 ),
-                        //               ),
-                        //               SizedBox(width: 17.h),
-                        //               Container(
-                        //                 width: 400.w,
-                        //                 child: Text(
-                        //                   item.singleOrderList[0].customerName,
-                        //                   style: textFieldStyle(
-                        //                     color: Color.fromARGB(
-                        //                       255,
-                        //                       1,
-                        //                       77,
-                        //                       138,
-                        //                     ),
-                        //                     fontSize: 28.sp,
-                        //                     weight: FontWeight.w700,
-                        //                   ),
-                        //                 ),
-                        //               ),
-                        //               SizedBox(width: 17.h),
-                        //             ],
-                        //           ),
-                        //         ),
-                        //       if (widget.docType.isNotEmpty)
-                        //         Container(
-                        //           margin: EdgeInsets.only(
-                        //             left: 20.w,
-                        //             bottom: 20.h,
-                        //           ),
-                        //           child: Row(
-                        //             children: [
-                        //               Text(
-                        //                 "Document:",
-                        //                 style: textFieldStyle(
-                        //                   color: Colors.grey.shade800,
-                        //                   fontSize: 26.sp,
-                        //                   weight: FontWeight.w500,
-                        //                 ),
-                        //               ),
-                        //               SizedBox(width: 17.h),
-                        //               Container(
-                        //                 child: Text(
-                        //                   widget.docType,
-                        //                   style: textFieldStyle(
-                        //                     color: Color.fromARGB(
-                        //                       255,
-                        //                       1,
-                        //                       77,
-                        //                       138,
-                        //                     ),
-                        //                     fontSize: 28.sp,
-                        //                     weight: FontWeight.w700,
-                        //                   ),
-                        //                 ),
-                        //               ),
-                        //               SizedBox(width: 80.h),
-                        //               if (item
-                        //                   .singleOrderList[0]
-                        //                   .info
-                        //                   .isNotEmpty)
-                        //                 Row(
-                        //                   children: [
-                        //                     Text(
-                        //                       "Info:",
-                        //                       style: textFieldStyle(
-                        //                         color: Colors.grey.shade800,
-                        //                         fontSize: 26.sp,
-                        //                         weight: FontWeight.w500,
-                        //                       ),
-                        //                     ),
-                        //                     SizedBox(width: 17.h),
-                        //                     ElTooltip(
-                        //                       content: Text(
-                        //                         item.singleOrderList[0].info,
-                        //                         style: textFieldStyle(
-                        //                           color: Color.fromARGB(
-                        //                             255,
-                        //                             1,
-                        //                             77,
-                        //                             138,
-                        //                           ),
-                        //                           fontSize: 30.sp,
-                        //                           weight: FontWeight.w800,
-                        //                         ),
-                        //                       ),
-                        //                       color: Colors.white,
-                        //                       child: Icon(
-                        //                         Icons.info_rounded,
-                        //                         size: 40.r,
-                        //                       ),
-                        //                     ),
-                        //                   ],
-                        //                 ),
-                        //             ],
-                        //           ),
-                        //         ),
-                        //       SizedBox(height: 20.h),
-                        //       if (item.singleOrderList.isNotEmpty)
-                        //         ClipRRect(
-                        //           borderRadius: BorderRadius.only(
-                        //             bottomLeft: Radius.circular(8),
-                        //             bottomRight: Radius.circular(8),
-                        //           ),
-                        //           child: LinearPercentIndicator(
-                        //             lineHeight: 28.0.h,
-                        //             padding: EdgeInsets.zero,
-                        //             percent: _isLoading
-                        //                 ? 0
-                        //                 : double.parse(
-                        //                     item
-                        //                         .singleOrderList[0]
-                        //                         .totalPercentage,
-                        //                   ),
-                        //             animation: true,
-                        //             backgroundColor: Colors.white,
-                        //             progressColor: _isLoading
-                        //                 ? Colors.white
-                        //                 : item
-                        //                           .singleOrderList[0]
-                        //                           .totalPercentage ==
-                        //                       1
-                        //                 ? Color.fromARGB(255, 15, 122, 19)
-                        //                 : const Color.fromARGB(
-                        //                     255,
-                        //                     241,
-                        //                     222,
-                        //                     51,
-                        //                   ),
-                        //             // Color.fromARGB(255, 117, 221, 120),
-                        //           ),
-                        //         ),
-                        //     ],
-                        //   ),
-                        // ),
                         SizedBox(height: 10.h),
 
                         //////
                         ///      container for barcode result
                         //////
-                        if (widget.type != "COMPLETE DISPATCH LIST")
+                        if (!widget.isCompletedTab &&
+                            widget.type != "COMPLETE DISPATCH LIST")
                           Container(
                             height: 360.h,
                             width: double.infinity,
@@ -1068,7 +792,8 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                         //////
                         SizedBox(height: 5.h),
                         if (checkSuccess != 0)
-                          if (widget.type != "COMPLETE DISPATCH LIST")
+                          if (!widget.isCompletedTab &&
+                              widget.type != "COMPLETE DISPATCH LIST")
                             Text(
                               checkSuccess == 1
                                   ? item.errorMessage
@@ -1138,8 +863,8 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                     ),
                   ),
                 ),
-                Expanded(
-                  child: Container(
+                if (!widget.isCompletedTab)
+                  Container(
                     width: double.infinity,
                     padding: EdgeInsets.symmetric(
                       horizontal: 20.w,
@@ -1158,52 +883,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: InkWell(
-                      onTap: () async {
-                        await showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              content: Text(
-                                'Are you sure you want to Mark As Complete?',
-                              ),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () async {
-                                    setState(() {
-                                      _isLoading = true;
-                                    });
-
-                                    bool check = await item.markAsCompleted(
-                                      widget.document.documentNumber,
-                                      widget.location,
-                                      'TT',
-                                      context,
-                                    );
-                                    if (check) {
-                                      Navigator.of(context).pop("yesload");
-                                    }
-                                    setState(() {
-                                      _isLoading = false;
-                                    });
-                                  },
-
-                                  //kjndkjasnd
-                                  child: Text('Yes'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    // Handle "No" button tap
-                                    Navigator.of(
-                                      context,
-                                    ).pop(false); // Return false to the caller
-                                  },
-                                  child: Text('No'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
+                      onTap: _handleMarkAsComplete,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -1226,7 +906,6 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
