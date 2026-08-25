@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pdc/Modules/competitors_model.dart';
 import 'package:pdc/Modules/department_model.dart';
@@ -28,6 +29,7 @@ class AddReceivingScreen extends StatefulWidget {
 }
 
 class _AddReceivingScreenState extends State<AddReceivingScreen> {
+  static const int _maxRemarkCharacters = 300;
   final _formKey = GlobalKey<FormState>();
   TextEditingController remarkController = TextEditingController();
   bool _isLoading = false;
@@ -713,7 +715,20 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                 child: TextFormField(
                                   controller: remarkController,
                                   style: textFieldStyle(color: Colors.black),
-                                  maxLines: 2,
+                                  maxLines: 4,
+                                  inputFormatters: [
+                                    LengthLimitingTextInputFormatter(
+                                      _maxRemarkCharacters,
+                                    ),
+                                  ],
+                                  onChanged: (_) => setState(() {}),
+                                  validator: (value) {
+                                    if ((value ?? '').length >
+                                        _maxRemarkCharacters) {
+                                      return 'Remarks cannot exceed $_maxRemarkCharacters characters';
+                                    }
+                                    return null;
+                                  },
                                   decoration: InputDecoration(
                                     filled: true,
                                     fillColor: Colors.white,
@@ -730,6 +745,8 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                       borderSide: BorderSide.none,
                                     ),
                                     contentPadding: EdgeInsets.all(15.w),
+                                    counterText:
+                                        '${remarkController.text.length} / $_maxRemarkCharacters characters',
                                   ),
                                 ),
                               ),

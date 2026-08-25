@@ -18,10 +18,17 @@ class CustomAppBar extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
             },
-            child: Icon(
-              Icons.arrow_back_ios,
-              size: 34.sp,
-              color: Color.fromARGB(255, 1, 77, 138),
+            borderRadius: BorderRadius.circular(12.r),
+            child: SizedBox(
+              width: 72.w,
+              height: 72.h,
+              child: Center(
+                child: Icon(
+                  Icons.arrow_back_ios,
+                  size: 44.sp,
+                  color: Color.fromARGB(255, 1, 77, 138),
+                ),
+              ),
             ),
           ),
           SizedBox(width: 20.w),

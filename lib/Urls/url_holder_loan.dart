@@ -45,7 +45,6 @@ class UrlHolderLoan {
   static const allowDevice = 'eets/allow';
   static const getMaterialType = 'v1/materialtransfer/type';
   static const materialTransferMarkAsComplete = 'v1/order/materialtransfer';
-  static const getMaterialTransferType = 'v1/order/materialtransfer';
   static const getOption = "master/accessto";
   static const getAttendence = "eets/entry";
   static const showAllBarcodes = "v1/order/line/details";

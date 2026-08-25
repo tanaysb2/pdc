@@ -289,7 +289,7 @@ Widget customTile(
   bool enableNavigation = true,
 }) {
   final item = Provider.of<ReceivingProvider>(context, listen: true);
-  log("document.oth1: ${type}");
+  log("document: ${document.toJson()}");
   return InkWell(
     onTap: enableNavigation
         ? () {
@@ -301,11 +301,11 @@ Widget customTile(
                   document: document,
                   location: location,
                   type: type,
-                  pickListnos: '',
+                  pickListnos: document.documentNumber,
                   invoiceNo: '',
                   name: name,
-                  docType: '',
-                  ordType: '',
+                  docType: document.documentType ?? '',
+                  ordType: document.documentType ?? '',
                   isCompletedTab: isCompletedTab,
                   onMarkedComplete: () => callback(),
                 );

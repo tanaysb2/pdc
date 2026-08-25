@@ -33,6 +33,7 @@ class ReceivingProvider with ChangeNotifier {
   List<DocumentData> pendingDocuments = [];
   List<DocumentData> completedDocuments = [];
   List<DocumentDetailData> documentDetail = [];
+  List<DocumentDetailData> skuDetails = [];
   TextEditingController stencilIdController = TextEditingController();
   String errorMessage = "";
   List<Department> departments = [];
@@ -47,6 +48,7 @@ class ReceivingProvider with ChangeNotifier {
   String matnr = "";
   String stencilNo = "";
   String material = "";
+    List<CartClass> cartList = [];
   List<MaterialModal> materialList = [];
   List<Purpose> purposes = [];
   String selectedPrefix = "";
@@ -60,6 +62,7 @@ class ReceivingProvider with ChangeNotifier {
   final player = AudioPlayer();
   List<Rack> rackList = [];
   List<Module> modules = [];
+   String totalStockQty = "";
   TextEditingController barcodeManualController = TextEditingController();
   bool showBin = false;
   String selectedMaterial = "";
@@ -143,6 +146,44 @@ class ReceivingProvider with ChangeNotifier {
     return _barcodeDetails;
   }
 
+ Future cart({String txcurrentLoc = "", String txmaterialCode = ""}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final txtoken = prefs.getString("userToken");
+    var headers = {'Authorization': 'Bearer $txtoken'};
+    print(txcurrentLoc);
+    print(txmaterialCode);
+    var request = Request(
+        'GET',
+        Uri.parse(
+            '${UrlHolderLoan.baseUrl}${UrlHolderLoan.materialDetails}?currentLocation=$txcurrentLoc&materialCode=$txmaterialCode&storageLocation=&binCode=&rackCode=&category=&level=1&type='));
+
+    request.headers.addAll(headers);
+    List<CartClass> demoCartList = [];
+
+    StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      // print(await response.stream.bytesToString());
+      final xyz = await response.stream.bytesToString();
+      final List responseData = json.decode(xyz)["data"]["materialInfo"];
+      final responseDataTotalStock =
+          json.decode(xyz)["data"]["totalStockQuantity"];
+      responseData.forEach((element) {
+        return demoCartList.add(CartClass(
+          bin: element["BinCd"],
+          prodDate: element["ProdDate"],
+          storgLoc: element["StorgLoc"],
+          manfPlant: element["DocType"],
+          barcode: element["BarcodeUID"],
+        ));
+      });
+      totalStockQty = responseDataTotalStock.toString();
+      cartList = demoCartList;
+      notifyListeners();
+    } else {
+      print(response.reasonPhrase);
+    }
+  }
   void setSelectedCompany(String? v) {
     selectedCompany = v;
     notifyListeners();
@@ -275,7 +316,8 @@ class ReceivingProvider with ChangeNotifier {
   Future<bool> markAsCompleted(
     String documentNumber,
     String location,
-    String docType,
+    String pickListNo,
+    String orderType,
     BuildContext context,
   ) async {
     try {
@@ -285,36 +327,70 @@ class ReceivingProvider with ChangeNotifier {
         return false;
       }
 
-      final headers = {
-        'Content-Type': 'application/json',
+      final resolvedLocation = location.trimRight();
+      final resolvedPickListNo = pickListNo.trimRight().isNotEmpty
+          ? pickListNo.trimRight()
+          : documentNumber.trimRight();
+      
+
+      final uri = Uri.parse(
+        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.materialTransferMarkAsComplete}',
+      );
+
+      final payload = {
+        "pickListNo": resolvedPickListNo,
+        "location": resolvedLocation,
+        "orderType": "TT",
+      };
+      final encodedBody = json.encode(payload);
+
+      log("markAsCompleted url: $uri");
+      log("markAsCompleted body: $encodedBody");
+
+      final authHeaders = {
         'Authorization': 'Bearer $txtoken',
       };
-      final request = Request(
-        'POST',
-        Uri.parse(
-          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}/$documentNumber/complete?location=$location',
-        ),
-      );
-      request.body = json.encode({
-        "docType": docType.trimRight(),
-        "location": location.trimRight(),
-      });
-      request.headers.addAll(headers);
 
-      final response = await request.send().timeout(
+      // Send JSON as text/plain so Express does not turn the body into an
+      // object before the API calls JSON.parse(req.body).
+      var request = Request('POST', uri);
+      request.body = encodedBody;
+      request.headers.addAll({
+        ...authHeaders,
+        'Content-Type': 'text/plain; charset=utf-8',
+      });
+
+      var streamed = await request.send().timeout(
         const Duration(seconds: 60),
       );
+      var xyz = await streamed.stream.bytesToString();
+      log("markAsCompleted status: ${streamed.statusCode} body: $xyz");
 
-      if (response.statusCode == 200) {
+      if (streamed.statusCode == 400 &&
+          xyz.contains('Unexpected token o in JSON')) {
+        request = Request('POST', uri);
+        request.bodyFields = {
+          'pickListNo': resolvedPickListNo,
+          'location': resolvedLocation,
+          'orderType': "TT",
+        };
+        request.headers.addAll(authHeaders);
+        streamed = await request.send().timeout(
+          const Duration(seconds: 60),
+        );
+        xyz = await streamed.stream.bytesToString();
+        log("markAsCompleted form retry status: ${streamed.statusCode} body: $xyz");
+      }
+
+      if (streamed.statusCode == 200 || streamed.statusCode == 201) {
         bool? checkVibrate = await Vibration.hasVibrator();
-        final xyz = await response.stream.bytesToString();
         if (checkVibrate == true) Vibration.vibrate();
         AudioPlayer().play(AssetSource('audio/sound.wav'));
 
-        final responseData = json.decode(xyz)["message"];
+        final responseData = _tryExtractMessage(xyz) ?? "Marked as completed";
 
         await EasyLoading.showToast(
-          responseData.toString(),
+          responseData,
           maskType: EasyLoadingMaskType.black,
           duration: const Duration(milliseconds: 600),
           dismissOnTap: true,
@@ -325,19 +401,20 @@ class ReceivingProvider with ChangeNotifier {
         return true;
       } else {
         bool? checkVibrate = await Vibration.hasVibrator();
-        final xyz = await response.stream.bytesToString();
         if (checkVibrate == true) Vibration.vibrate();
         AudioPlayer().play(AssetSource('audio/error.wav'));
 
-        final responseData = json.decode(xyz)["message"];
-
-        showDialogForallDialog(context, responseData.toString());
+        showDialogForallDialog(
+          context,
+          _tryExtractMessage(xyz) ?? "Something went wrong. Please try again.",
+        );
 
         notifyListeners();
 
         return false;
       }
     } catch (e) {
+      log("markAsCompleted error: $e");
       EasyLoading.showToast(
         "Connectivity issue, Please try again",
         maskType: EasyLoadingMaskType.black,
@@ -598,6 +675,62 @@ class ReceivingProvider with ChangeNotifier {
 
       final detailResponse = DocumentDetailResponse.fromJson(jsonData);
       documentDetail = detailResponse.data;
+      notifyListeners();
+      return true;
+    } else {
+      final body = await response.stream.bytesToString();
+
+      bool? checkVibrate = await Vibration.hasVibrator();
+      if (checkVibrate == true) {
+        Vibration.vibrate();
+      }
+
+      _player.play(AssetSource('audio/error.wav'));
+
+      final message = _extractErrorMessage(body);
+      EasyLoading.showToast(message, maskType: EasyLoadingMaskType.black);
+      return false;
+    }
+  }
+
+  /// Fetch SKU-level scanned items for a document.
+  ///
+  /// GET `v1/pdc/documents/{documentNumber}/sku/{materialCode}?location=&docType=`
+  Future<bool> fetchSkuDetails({
+    required String documentNumber,
+    required String materialCode,
+    required String location,
+    required String docType,
+  }) async {
+    skuDetails = [];
+    notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("userToken");
+
+    if (token == null || token.isEmpty) {
+      return false;
+    }
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    final request = Request(
+      'GET',
+      Uri.parse(
+        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}/$documentNumber/sku/$materialCode?location=$location&docType=$docType',
+      ),
+    );
+
+    request.headers.addAll(headers);
+
+    final response = await request.send().timeout(const Duration(seconds: 60));
+
+    if (response.statusCode == 200) {
+      final body = await response.stream.bytesToString();
+      final Map<String, dynamic> jsonData = json.decode(body);
+
+      final detailResponse = DocumentDetailResponse.fromJson(jsonData);
+      skuDetails = detailResponse.data;
       notifyListeners();
       return true;
     } else {
@@ -1306,16 +1439,42 @@ class ReceivingProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  String _extractErrorMessage(String body) {
+  String? _tryExtractMessage(String body) {
+    if (body.trim().isEmpty) return null;
     try {
       final data = json.decode(body);
-      if (data is Map<String, dynamic> && data["message"] != null) {
-        return data["message"].toString();
+      if (data is! Map) return null;
+
+      final message = data["message"];
+      if (message is String && message.trim().isNotEmpty) {
+        return message;
+      }
+      if (message is Map && message["value"] != null) {
+        return message["value"].toString();
+      }
+
+      final error = data["error"];
+      if (error is String && error.trim().isNotEmpty) {
+        return error;
+      }
+      if (error is Map) {
+        final errorMessage = error["message"];
+        if (errorMessage is String && errorMessage.trim().isNotEmpty) {
+          return errorMessage;
+        }
+        if (errorMessage is Map && errorMessage["value"] != null) {
+          return errorMessage["value"].toString();
+        }
       }
     } catch (_) {
-      // ignore and fall back to default message
+      // ignore and fall back
     }
-    return "Something went wrong. Please try again.";
+    return null;
+  }
+
+  String _extractErrorMessage(String body) {
+    return _tryExtractMessage(body) ??
+        "Something went wrong. Please try again.";
   }
 
   Future<List<Category>?> fetchCategories(
@@ -1554,7 +1713,7 @@ class ReceivingProvider with ChangeNotifier {
       Uri.parse(
         '${UrlHolderLoan.baseUrl}${UrlHolderLoan.scanBarcode}?barcode=${barcode.trimRight()}&pickListNo=${pickListNos.trimRight()}&docType=${docType.trimRight()}&ordType=TT&location=$location&fromstrg=&deviceId=&binCd=&rackCd=',
       ),
-    );
+    );    
 
     request.headers.addAll(headers);
 
@@ -1704,4 +1863,17 @@ class BarcodeDetails {
     required this.materialDetails,
     required this.materialPlantDetails,
   });
+}
+class CartClass {
+  String prodDate;
+  String bin;
+  String manfPlant;
+  String barcode;
+  String storgLoc;
+  CartClass(
+      {this.bin = "",
+      this.prodDate = "",
+      this.storgLoc = "",
+      this.manfPlant = "",
+      this.barcode = ""});
 }

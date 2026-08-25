@@ -14,6 +14,7 @@ import 'package:pdc/Modules/plant.dart';
 import 'package:pdc/Providers/receiving_provider.dart';
 import 'package:pdc/Resuable%20components/app_bar.dart';
 import 'package:pdc/Resuable%20components/barcode_info.dart';
+import 'package:pdc/Resuable%20components/cart_page_screen.dart';
 import 'package:pdc/Resuable%20components/custom_lablel_dropdown.dart';
 import 'package:pdc/Resuable%20components/custom_searchable_dropdown.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
@@ -207,7 +208,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
             materialCode,
             plantController.value.text,
             widget.location,
-            "TT",
+            widget.ordType,
             widget.document.documentNumber,
           );
           setState(() {
@@ -543,54 +544,17 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
     if (Platform.isAndroid) {
       // final item = Provider.of<ReceivingProvider>(context, listen: false);
       fdw = FlutterDataWedge();
-      onScanResultListener = fdw.onScanResult.listen(
-        (result) => setState(() async {
-          scanResults = result;
-
-          if (isTrue) {
-            Provider.of<ReceivingProvider>(
-              context,
-              listen: false,
-            ).getManualBarcode(result.data);
-          }
-
-          if (isTrue == false) {
-            await Provider.of<ReceivingProvider>(context, listen: false)
-                .scanBarcode(
-                  result.data,
-                  widget.document.documentNumber,
-                  widget.type,
-                  widget.location,
-                  "",
-                  '',
-                  context,
-                  removeBarcode: removeCheck,
-                )
-                .then((value) {
-                  if (value) {
-                    if (isTrue == false) {
-                      Provider.of<ReceivingProvider>(
-                        context,
-                        listen: false,
-                      ).fetchDocumentDetail(
-                        context,
-                        widget.document.documentNumber,
-                        widget.location,
-                      );
-                    }
-                    //// response 200x
-                    checkSuccess = 1;
-                    setState(() {});
-                    //// response 200
-                  } else {
-                    checkSuccess = 2;
-                    setState(() {});
-                    //// response 400
-                  }
-                });
-          }
-        }),
-      );
+      onScanResultListener = fdw.onScanResult.listen((result) async {
+        scanResults = result;
+        if (isTrue) {
+          Provider.of<ReceivingProvider>(
+            context,
+            listen: false,
+          ).barcodeManualController.text = result.data;
+          return;
+        }
+        await _processBarcode(result.data);
+      });
 
       onScannerStatusListener = fdw.onScannerStatus.listen(
         (status) => setState(() => lastStatus = status.status.toString()),
@@ -638,7 +602,12 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
       final check = await provider.markAsCompleted(
         widget.document.documentNumber,
         widget.location,
-        widget.type,
+        widget.pickListnos.isNotEmpty
+            ? widget.pickListnos
+            : widget.document.documentNumber,
+        widget.docType.isNotEmpty
+            ? widget.docType
+            : (widget.type.isNotEmpty ? widget.type : "TT"),
         context,
       );
 
@@ -661,6 +630,163 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
         });
       }
     }
+  }
+
+  Future<void> _processBarcode(String barcode) async {
+    final trimmed = barcode.trim();
+    if (trimmed.isEmpty || !mounted) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final provider = Provider.of<ReceivingProvider>(context, listen: false);
+      final success = await provider.scanBarcode(
+        trimmed,
+        widget.document.documentNumber,
+        widget.type,
+        widget.location,
+        "",
+        '',
+        context,
+        removeBarcode: removeCheck,
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        await provider.fetchDocumentDetail(
+          context,
+          widget.document.documentNumber,
+          widget.location,
+        );
+        checkSuccess = 1;
+      } else {
+        checkSuccess = 2;
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showEnterBarcodeSheet() async {
+    isTrue = true;
+    final provider = Provider.of<ReceivingProvider>(context, listen: false);
+    provider.barcodeManualController = TextEditingController();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        bool sheetRemove = removeCheck;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 24.h),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(height: 10.h),
+                    Text(
+                      "Enter Barcode",
+                      style: textFieldStyle(
+                        color: const Color.fromARGB(255, 1, 77, 138),
+                        weight: FontWeight.w700,
+                        fontSize: 40.sp,
+                      ),
+                    ),
+                    SizedBox(height: 36.h),
+                    CustomTextField(
+                      controller: provider.barcodeManualController,
+                      labelText: "Barcode",
+                      margin: false,
+                      isFocused: true,
+                    ),
+                    SizedBox(height: 16.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          "Remove Barcode",
+                          style: textFieldStyle(
+                            color: const Color.fromARGB(255, 1, 77, 138),
+                            fontSize: 28.sp,
+                            weight: FontWeight.w800,
+                          ),
+                        ),
+                        Switch(
+                          value: sheetRemove,
+                          activeColor: Colors.red,
+                          onChanged: (value) {
+                            setSheetState(() {
+                              sheetRemove = value;
+                            });
+                            setState(() {
+                              removeCheck = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24.h),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 88.h,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 1, 77, 138),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () async {
+                          final code =
+                              provider.barcodeManualController.text.trim();
+                          if (code.isEmpty) {
+                            EasyLoading.showToast(
+                              "Please enter barcode",
+                              maskType: EasyLoadingMaskType.black,
+                            );
+                            return;
+                          }
+                          Navigator.of(sheetContext).pop();
+                          await _processBarcode(code);
+                        },
+                        child: Text(
+                          "Scan",
+                          style: textFieldStyle(
+                            color: Colors.white,
+                            weight: FontWeight.w700,
+                            fontSize: 32.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ).whenComplete(() {
+      isTrue = false;
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -807,45 +933,34 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                               ),
                             ),
                         SizedBox(height: 20.h),
-
-                        // Container(
-                        //   margin: EdgeInsets.symmetric(horizontal: 28.w),
-                        //   width: double.infinity,
-                        //   child: ElevatedButton(
-                        //       style: ElevatedButton.styleFrom(
-                        //         backgroundColor:
-                        //             Color.fromARGB(255, 1, 77, 138),
-                        //         shape: RoundedRectangleBorder(
-                        //           borderRadius:
-                        //               BorderRadius.circular(12), // <-- Radius
-                        //         ),
-                        //       ),
-                        //       onPressed: () async {
-                        //         showPlantBox(context).then((value) async {
-                        //           if (reload == true) {
-                        //             _isLoading = true;
-                        //             setState(() {});
-                        //             // await Provider.of<QacageProvider>(context,
-                        //             //         listen: false)
-                        //             //     .getSingleQaCageList(
-                        //             //         widget.location,
-                        //             //         widget.pickListnos,
-                        //             //         widget.type !=
-                        //             //                 "COMPLETED QA CAGE LIST"
-                        //             //             ? ""
-                        //             //             : "C");
-                        //             _isLoading = false;
-
-                        //             setState(() {});
-                        //           } else {}
-                        //         });
-                        //       },
-                        //       child: Text("+ Add Barcode",
-                        //           style: textFieldStyle(
-                        //               color: Colors.white,
-                        //               weight: FontWeight.w700,
-                        //               fontSize: 30.sp))),
-                        // ),
+                        if (!widget.isCompletedTab)
+                          Container(
+                            margin: EdgeInsets.symmetric(horizontal: 30.w),
+                            width: double.infinity,
+                            height: 88.h,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  1,
+                                  77,
+                                  138,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              onPressed: _showEnterBarcodeSheet,
+                              child: Text(
+                                "Enter barcode",
+                                style: textFieldStyle(
+                                  color: Colors.white,
+                                  weight: FontWeight.w700,
+                                  fontSize: 30.sp,
+                                ),
+                              ),
+                            ),
+                          ),
                         SizedBox(height: 20.h),
                         ...(item.documentDetail)
                             .map(
@@ -856,6 +971,10 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                                 widget.location,
                                 widget.docType,
                                 widget.pickListnos,
+                                widget.document.documentNumber,
+                                widget.name,
+                                showSkuArrow: widget.name != "Gate In" ||
+                                    widget.isCompletedTab,
                               ),
                             )
                             .toList(),
@@ -922,117 +1041,149 @@ Widget customTileDown(
   BuildContext context,
   String location,
   String docType,
-  String order, {
-  Function(bool?)? onChangedtx,
+  String order,
+  String documentNumber,
+  String title, {
+  bool showSkuArrow = true,
 }) {
-  return Container(
-    width: double.infinity,
-    margin: EdgeInsets.symmetric(horizontal: 30.w, vertical: 14.h),
-    decoration: BoxDecoration(
-      // border: Border.all(color: Colors.white),
-      color: Colors.white,
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black,
-          offset: Offset(0.0, 0.4), //(x,y)
-          blurRadius: 0.6,
+  void openSkuScreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CartPageScreen(
+          location: location,
+          materialCode: data.matnr,
+          materialDesc: data.maktx,
+          documentNumber:
+              documentNumber.isNotEmpty ? documentNumber : data.docNo,
+          docType: docType,
+          title: title,
         ),
-      ],
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Column(
-      children: [
-        SizedBox(height: 10.h),
-        Padding(
-          padding: EdgeInsets.only(left: 20.w, right: 15.w, top: 20.h),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 150.w,
-                child: Text(
-                  "Item Desc",
-                  style: textFieldStyle(
-                    color: Colors.grey.shade800,
-                    fontSize: 26.sp,
-                    weight: FontWeight.w500,
+      ),
+    );
+  }
+
+  return InkWell(
+    onTap: openSkuScreen,
+    child: Container(
+      width: double.infinity,
+      margin: EdgeInsets.symmetric(horizontal: 30.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(0.0, 0.4),
+            blurRadius: 0.6,
+          ),
+        ],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          SizedBox(height: 10.h),
+          Padding(
+            padding: EdgeInsets.only(left: 20.w, right: 8.w, top: 20.h),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 150.w,
+                  child: Text(
+                    "Item Desc",
+                    style: textFieldStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: 26.sp,
+                      weight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: 20.w),
-              Expanded(
-                child: Text(
-                  data.maktx,
+                SizedBox(width: 20.w),
+                Expanded(
+                  child: Text(
+                    data.maktx,
+                    style: textFieldStyle(
+                      color: Color.fromARGB(255, 1, 77, 138),
+                      fontSize: 28.sp,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (showSkuArrow)
+                  SizedBox(
+                    width: 56.w,
+                    height: 48.h,
+                    child: Center(
+                      child: Icon(
+                        Icons.arrow_forward_ios,
+                        size: 28.sp,
+                        color: Color.fromARGB(255, 1, 77, 138),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          SizedBox(height: 10.h),
+          Padding(
+            padding: EdgeInsets.only(left: 20.w, right: 15.w, top: 30.h),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 150.w,
+                  child: Text(
+                    "Item Code",
+                    style: textFieldStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: 26.sp,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 20.w),
+                Text(
+                  data.matnr,
                   style: textFieldStyle(
                     color: Color.fromARGB(255, 1, 77, 138),
                     fontSize: 28.sp,
                     weight: FontWeight.w700,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        SizedBox(height: 10.h),
-        Padding(
-          padding: EdgeInsets.only(left: 20.w, right: 15.w, top: 30.h),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 150.w,
-                child: Text(
-                  "Item Code",
-                  style: textFieldStyle(
-                    color: Colors.grey.shade800,
-                    fontSize: 26.sp,
-                    weight: FontWeight.w500,
+          SizedBox(height: 10.h),
+          Padding(
+            padding: EdgeInsets.only(left: 20.w, right: 15.w, top: 30.h),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 150.w,
+                  child: Text(
+                    "Scan Qty.",
+                    style: textFieldStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: 26.sp,
+                      weight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: 20.w),
-              Text(
-                data.matnr,
-                style: textFieldStyle(
-                  color: Color.fromARGB(255, 1, 77, 138),
-                  fontSize: 28.sp,
-                  weight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 10.h),
-        Padding(
-          padding: EdgeInsets.only(left: 20.w, right: 15.w, top: 30.h),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 150.w,
-                child: Text(
-                  "Scan Qty.",
+                SizedBox(width: 20.w),
+                Text(
+                  data.skuCnt,
                   style: textFieldStyle(
-                    color: Colors.grey.shade800,
-                    fontSize: 26.sp,
-                    weight: FontWeight.w500,
+                    color: Color.fromARGB(255, 1, 77, 138),
+                    fontSize: 28.sp,
+                    weight: FontWeight.w700,
                   ),
                 ),
-              ),
-              SizedBox(width: 20.w),
-              Text(
-                data.skuCnt,
-                style: textFieldStyle(
-                  color: Color.fromARGB(255, 1, 77, 138),
-                  fontSize: 28.sp,
-                  weight: FontWeight.w700,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        SizedBox(height: 10.h),
-      ],
+          SizedBox(height: 10.h),
+        ],
+      ),
     ),
   );
 }
