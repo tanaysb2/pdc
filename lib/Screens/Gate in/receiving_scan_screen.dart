@@ -1063,7 +1063,7 @@ Widget customTileDown(
   }
 
   return InkWell(
-    onTap: openSkuScreen,
+    onTap:  showSkuArrow ? openSkuScreen : null,
     child: Container(
       width: double.infinity,
       margin: EdgeInsets.symmetric(horizontal: 30.w, vertical: 14.h),

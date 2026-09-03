@@ -715,7 +715,7 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                                 child: TextFormField(
                                   controller: remarkController,
                                   style: textFieldStyle(color: Colors.black),
-                                  maxLines: 4,
+                                  maxLines: 5,
                                   inputFormatters: [
                                     LengthLimitingTextInputFormatter(
                                       _maxRemarkCharacters,
