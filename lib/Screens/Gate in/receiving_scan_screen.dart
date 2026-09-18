@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_datawedge/flutter_datawedge.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -729,7 +730,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                         ),
                         Switch(
                           value: sheetRemove,
-                          activeColor: Colors.red,
+                          activeThumbColor: Colors.red,
                           onChanged: (value) {
                             setSheetState(() {
                               sheetRemove = value;
@@ -786,6 +787,299 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
     ).whenComplete(() {
       isTrue = false;
       if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _processCompetitor({
+    required String category,
+    required String size,
+    required String make,
+    required String brand,
+    required String pattern,
+    required String serialNo,
+    required String remarks,
+  }) async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final provider = Provider.of<ReceivingProvider>(context, listen: false);
+      final success = await provider.scanCompetitor(
+        context,
+        documentNumber: widget.document.documentNumber,
+        category: category,
+        size: size,
+        make: make,
+        brand: brand,
+        pattern: pattern,
+        serialNo: serialNo,
+        remarks: remarks,
+        docType: widget.docType.isNotEmpty
+            ? widget.docType
+            : (widget.type.isNotEmpty ? widget.type : "TT"),
+        location: widget.location,
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        await provider.fetchDocumentDetail(
+          context,
+          widget.document.documentNumber,
+          widget.location,
+        );
+        checkSuccess = 1;
+      } else {
+        checkSuccess = 2;
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showCompetitorSheet() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await Provider.of<ReceivingProvider>(
+      context,
+      listen: false,
+    ).fetchTyreCategories();
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
+
+    final formKey = GlobalKey<FormState>();
+    final sizeController = TextEditingController();
+    final makeController = TextEditingController();
+    final brandController = TextEditingController();
+    final patternController = TextEditingController();
+    final serialNoController = TextEditingController();
+    final remarksController = TextEditingController();
+    String? selectedCategoryCode;
+    final tyreCategories = Provider.of<ReceivingProvider>(
+      context,
+      listen: false,
+    ).tyreCategories;
+
+    final upperNoSpace = [
+      FilteringTextInputFormatter.deny(RegExp(r'\s')),
+      _UpperCaseTextFormatter(),
+    ];
+
+    Widget requiredField({
+      required TextEditingController controller,
+      required String label,
+    }) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 20.h),
+        child: CustomTextField(
+          controller: controller,
+          labelText: "$label *",
+          margin: false,
+          inputFormatters: upperNoSpace,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return "$label is required";
+            }
+            return null;
+          },
+        ),
+      );
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 24.h),
+              child: StatefulBuilder(
+                builder: (context, setSheetState) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(height: 10.h),
+                      Text(
+                        "Competitor",
+                        style: textFieldStyle(
+                          color: const Color.fromARGB(255, 1, 77, 138),
+                          weight: FontWeight.w700,
+                          fontSize: 40.sp,
+                        ),
+                      ),
+                      SizedBox(height: 36.h),
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 20.h),
+                        child: DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          initialValue: selectedCategoryCode,
+                          hint: Text(
+                            tyreCategories.isEmpty
+                                ? "No categories"
+                                : "Select Category",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontFamily: "NotoSans",
+                              fontSize: 32.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          items: tyreCategories
+                              .map(
+                                (c) => DropdownMenuItem<String>(
+                                  value: c.code,
+                                  child: Text(
+                                    "${c.code} - ${c.description}",
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            setSheetState(() {
+                              selectedCategoryCode = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Category is required";
+                            }
+                            return null;
+                          },
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontFamily: "NotoSans",
+                            fontSize: 32.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: "Category *",
+                            labelStyle: TextStyle(
+                              fontSize: 32.sp,
+                              color: Colors.black,
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 5.h,
+                              horizontal: 14.w,
+                            ),
+                            border: defaultBorderTextField(),
+                            errorBorder: defaultBorderTextField(),
+                            disabledBorder: defaultBorderTextField(),
+                            focusedBorder: defaultBorderTextField(),
+                            enabledBorder: defaultBorderTextField(),
+                          ),
+                        ),
+                      ),
+                      requiredField(
+                        controller: sizeController,
+                        label: "Size",
+                      ),
+                      requiredField(controller: makeController, label: "Make"),
+                      requiredField(
+                        controller: brandController,
+                        label: "Brand",
+                      ),
+                      requiredField(
+                        controller: patternController,
+                        label: "Pattern",
+                      ),
+                      requiredField(
+                        controller: serialNoController,
+                        label: "Serial No",
+                      ),
+                      CustomTextField(
+                        controller: remarksController,
+                        labelText: "Remarks",
+                        margin: false,
+                        maxCheck: 3,
+                      ),
+                      SizedBox(height: 28.h),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 88.h,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(
+                              255,
+                              1,
+                              77,
+                              138,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () async {
+                            if (!(formKey.currentState?.validate() ?? false)) {
+                              EasyLoading.showToast(
+                                "Please fill all required fields",
+                                maskType: EasyLoadingMaskType.black,
+                              );
+                              return;
+                            }
+                            final category = selectedCategoryCode ?? "";
+                            final size = sizeController.text.trim();
+                            final make = makeController.text.trim();
+                            final brand = brandController.text.trim();
+                            final pattern = patternController.text.trim();
+                            final serialNo = serialNoController.text.trim();
+                            final remarks = remarksController.text.trim();
+                            Navigator.of(sheetContext).pop();
+                            await _processCompetitor(
+                              category: category,
+                              size: size,
+                              make: make,
+                              brand: brand,
+                              pattern: pattern,
+                              serialNo: serialNo,
+                              remarks: remarks,
+                            );
+                          },
+                          child: Text(
+                            "Submit",
+                            style: textFieldStyle(
+                              color: Colors.white,
+                              weight: FontWeight.w700,
+                              fontSize: 32.sp,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    ).whenComplete(() {
+      sizeController.dispose();
+      makeController.dispose();
+      brandController.dispose();
+      patternController.dispose();
+      serialNoController.dispose();
+      remarksController.dispose();
     });
   }
 
@@ -894,7 +1188,7 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                                         ),
                                         child: Switch(
                                           value: removeCheck,
-                                          activeColor: Colors.red,
+                                          activeThumbColor: Colors.red,
                                           onChanged: (p0) {
                                             if (p0 == true) {
                                               removeCheck = true;
@@ -962,6 +1256,35 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                             ),
                           ),
                         SizedBox(height: 20.h),
+                        if (!widget.isCompletedTab)
+                          Container(
+                            margin: EdgeInsets.symmetric(horizontal: 30.w),
+                            width: double.infinity,
+                            height: 88.h,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  1,
+                                  77,
+                                  138,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              onPressed: _showCompetitorSheet,
+                              child: Text(
+                                "Competitor",
+                                style: textFieldStyle(
+                                  color: Colors.white,
+                                  weight: FontWeight.w700,
+                                  fontSize: 30.sp,
+                                ),
+                              ),
+                            ),
+                          ),
+                        SizedBox(height: 20.h),
                         ...(item.documentDetail)
                             .map(
                               (e) => customTileDown(
@@ -973,8 +1296,8 @@ class _PendingTabScreenState extends State<ReceivingScanScreen> {
                                 widget.pickListnos,
                                 widget.document.documentNumber,
                                 widget.name,
-                                showSkuArrow: widget.name != "Gate In" ||
-                                    widget.isCompletedTab,
+                                // showSkuArrow: widget.name != "Gate In" ||
+                                //     widget.isCompletedTab,
                               ),
                             )
                             .toList(),
@@ -1043,9 +1366,9 @@ Widget customTileDown(
   String docType,
   String order,
   String documentNumber,
-  String title, {
-  bool showSkuArrow = true,
-}) {
+  String title,
+  // bool showSkuArrow = true,
+) {
   void openSkuScreen() {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -1063,7 +1386,10 @@ Widget customTileDown(
   }
 
   return InkWell(
-    onTap:  showSkuArrow ? openSkuScreen : null,
+    onTap:  
+    // showSkuArrow ?
+     openSkuScreen ,
+    // : null,
     child: Container(
       width: double.infinity,
       margin: EdgeInsets.symmetric(horizontal: 30.w, vertical: 14.h),
@@ -1108,7 +1434,7 @@ Widget customTileDown(
                     ),
                   ),
                 ),
-                if (showSkuArrow)
+                // if (showSkuArrow)
                   SizedBox(
                     width: 56.w,
                     height: 48.h,
@@ -1186,4 +1512,17 @@ Widget customTileDown(
       ),
     ),
   );
+}
+
+class _UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
+  }
 }

@@ -44,7 +44,7 @@ class DropdownInput extends StatelessWidget {
       child: DropdownButtonFormField(
         isExpanded: true,
         focusNode: FocusNode(canRequestFocus: false),
-        value: value ?? null,
+        initialValue: value,
         items: items,
         onChanged: isEnabled == true ? onChanged : null,
         style: hintStyleChange == false

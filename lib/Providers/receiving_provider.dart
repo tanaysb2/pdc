@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart';
 import 'package:pdc/Modules/bin_model.dart';
 import 'package:pdc/Modules/category_model.dart';
+import 'package:pdc/Modules/competitor_barcode_model.dart';
 import 'package:pdc/Modules/competitors_model.dart';
 import 'package:pdc/Modules/department_model.dart';
 import 'package:pdc/Modules/document_detail_model.dart';
@@ -38,6 +39,8 @@ class ReceivingProvider with ChangeNotifier {
   String errorMessage = "";
   List<Department> departments = [];
   List<Competitor> competitors = [];
+  List<CompetitorBarcode> competitorBarcodes = [];
+  List<Category> tyreCategories = [];
   List<Reason> reasons = [];
   List<PlantModal> plantList = [];
 
@@ -1433,6 +1436,260 @@ class ReceivingProvider with ChangeNotifier {
     }
   }
 
+  /// Submits competitor tyre details for a PDC document via POST.
+  Future<bool> scanCompetitor(
+    BuildContext context, {
+    required String documentNumber,
+    required String category,
+    required String size,
+    required String make,
+    required String brand,
+    required String pattern,
+    required String serialNo,
+    String remarks = "",
+    required String docType,
+    required String location,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("userToken");
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+      final body = {
+        "category": category,
+        "size": size,
+        "make": make,
+        "brand": brand,
+        "pattern": pattern,
+        "serialNo": serialNo,
+        if (remarks.isNotEmpty) "remarks": remarks,
+        "docType": docType,
+        "location": location,
+      };
+
+      final request = Request(
+        'POST',
+        Uri.parse(
+          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}/$documentNumber/scan',
+        ),
+      );
+      request.body = json.encode(body);
+      request.headers.addAll(headers);
+
+      log("scanCompetitor body: ${request.body}");
+
+      final response = await request.send().timeout(
+        const Duration(seconds: 60),
+      );
+      final responseBody = await response.stream.bytesToString();
+      dynamic decoded = <String, dynamic>{};
+      if (responseBody.isNotEmpty) {
+        try {
+          decoded = json.decode(responseBody);
+        } catch (_) {}
+      }
+
+      if (response.statusCode == 200) {
+        bool? checkVibrate = await Vibration.hasVibrator();
+        if (checkVibrate == true) Vibration.vibrate();
+        AudioPlayer().play(AssetSource('audio/sound.wav'));
+
+        prodDate = category;
+        stencilNo = serialNo;
+        material = brand;
+        errorMessage = (decoded is Map && decoded["message"] != null)
+            ? decoded["message"].toString()
+            : "Competitor added";
+        notifyListeners();
+        return true;
+      } else {
+        bool? checkVibrate = await Vibration.hasVibrator();
+        if (checkVibrate == true) Vibration.vibrate();
+        player.play(AssetSource('audio/sirenerror.wav'));
+        player.setReleaseMode(ReleaseMode.loop);
+
+        final message = _extractErrorMessage(responseBody);
+        errorMessage = message;
+        showDialogForall(context, message);
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      EasyLoading.showToast(
+        "Connectivity issue, Please try again",
+        maskType: EasyLoadingMaskType.black,
+      );
+      return false;
+    }
+  }
+
+  /// Creates a competitor barcode via POST `v1/pdc/competitor/barcode`.
+  Future<bool> addCompetitorBarcode(
+    BuildContext context, {
+    required String barcode,
+    required String category,
+    required String size,
+    required String make,
+    required String brand,
+    required String pattern,
+    required String serialNo,
+    required String productionDate,
+    String remarks = "",
+    required String location,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("userToken");
+
+      if (token == null || token.isEmpty) {
+        EasyLoading.showToast(
+          "Please login again",
+          maskType: EasyLoadingMaskType.black,
+        );
+        return false;
+      }
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+      final body = {
+        "barcode": barcode,
+        "category": category,
+        "size": size,
+        "make": make,
+        "brand": brand,
+        "pattern": pattern,
+        "serialNo": serialNo,
+        "productionDate": productionDate,
+        if (remarks.isNotEmpty) "remarks": remarks,
+        "location": location,
+      };
+
+      final request = Request(
+        'POST',
+        Uri.parse(
+          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.competitorBarcode}',
+        ),
+      );
+      request.body = json.encode(body);      
+      request.headers.addAll(headers);        
+
+      log("addCompetitorBarcode body: ${request.body}");
+
+      final response = await request.send().timeout(
+        const Duration(seconds: 60),
+      );
+      final responseBody = await response.stream.bytesToString();
+      dynamic decoded = <String, dynamic>{};
+      if (responseBody.isNotEmpty) {
+        try {
+          decoded = json.decode(responseBody);
+        } catch (_) {}
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        bool? checkVibrate = await Vibration.hasVibrator();
+        if (checkVibrate == true) Vibration.vibrate();
+        AudioPlayer().play(AssetSource('audio/sound.wav'));
+
+        final message = (decoded is Map && decoded["message"] != null)
+            ? decoded["message"].toString()
+            : "Competitor barcode added";
+        errorMessage = message;
+        EasyLoading.showToast(
+          message,
+          maskType: EasyLoadingMaskType.black,
+        );
+        notifyListeners();
+        return true;
+      } else {
+        bool? checkVibrate = await Vibration.hasVibrator();
+        if (checkVibrate == true) Vibration.vibrate();
+        player.play(AssetSource('audio/sirenerror.wav'));
+        player.setReleaseMode(ReleaseMode.loop);
+
+        final message = _extractErrorMessage(responseBody);
+        errorMessage = message;
+        showDialogForall(context, message);
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      EasyLoading.showToast(
+        "Connectivity issue, Please try again",
+        maskType: EasyLoadingMaskType.black,
+      );
+      return false;
+    }
+  }
+
+  /// Fetches competitor barcodes via GET `v1/pdc/competitor/barcode`.
+  Future<bool> fetchCompetitorBarcodes(
+    BuildContext context, {
+    required String fromDate,
+    required String toDate,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("userToken");
+
+      if (token == null || token.isEmpty) {
+        EasyLoading.showToast(
+          "Please login again",
+          maskType: EasyLoadingMaskType.black,
+        );
+        return false;
+      }
+
+      final headers = {'Authorization': 'Bearer $token'};
+      final uri = Uri.parse(
+        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.competitorBarcode}?fromDate=$fromDate&toDate=$toDate',
+      );
+
+      log("fetchCompetitorBarcodes url: $uri");
+
+      final request = Request('GET', uri);
+      request.headers.addAll(headers);
+
+      final response = await request.send().timeout(
+        const Duration(seconds: 60),
+      );
+      final body = await response.stream.bytesToString();
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(body) as Map<String, dynamic>;
+        competitorBarcodes = CompetitorBarcodeResponse.fromJson(jsonData).data;
+        notifyListeners();
+        return true;
+      }
+
+      competitorBarcodes = [];
+      bool? checkVibrate = await Vibration.hasVibrator();
+      if (checkVibrate == true) Vibration.vibrate();
+      _player.play(AssetSource('audio/error.wav'));
+      EasyLoading.showToast(
+        _extractErrorMessage(body),
+        maskType: EasyLoadingMaskType.black,
+      );
+      notifyListeners();
+      return false;
+    } catch (e) {
+      competitorBarcodes = [];
+      EasyLoading.showToast(
+        "Connectivity issue, Please try again",
+        maskType: EasyLoadingMaskType.black,
+      );
+      notifyListeners();
+      return false;
+    }
+  }
+
   void getManualBarcode(String resultData) {
     barcodeManualController = TextEditingController();
     barcodeManualController = TextEditingController(text: resultData);
@@ -1475,6 +1732,55 @@ class ReceivingProvider with ChangeNotifier {
   String _extractErrorMessage(String body) {
     return _tryExtractMessage(body) ??
         "Something went wrong. Please try again.";
+  }
+
+  Future<bool> fetchTyreCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("userToken");
+      if (token == null || token.isEmpty) {
+        EasyLoading.showToast(
+          "Please login again",
+          maskType: EasyLoadingMaskType.black,
+        );
+        return false;
+      }
+
+      final request = Request(
+        'GET',
+        Uri.parse(
+          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getTyreCategories}',
+        ),
+      );
+      request.headers.addAll({'Authorization': 'Bearer $token'});
+
+      final response = await request.send().timeout(
+        const Duration(seconds: 60),
+      );
+      final body = await response.stream.bytesToString();
+
+      if (response.statusCode == 200) {
+        final categoryDetail = categoryModelFromJson(body);
+        final seen = <String>{};
+        tyreCategories = categoryDetail.categories
+            .where((c) => seen.add(c.code))
+            .toList();
+        notifyListeners();
+        return true;
+      }
+
+      EasyLoading.showToast(
+        _extractErrorMessage(body),
+        maskType: EasyLoadingMaskType.black,
+      );
+      return false;
+    } catch (e) {
+      EasyLoading.showToast(
+        "Connectivity issue, Please try again",
+        maskType: EasyLoadingMaskType.black,
+      );
+      return false;
+    }
   }
 
   Future<List<Category>?> fetchCategories(

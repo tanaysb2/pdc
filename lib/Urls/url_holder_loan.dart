@@ -78,6 +78,7 @@ class UrlHolderLoan {
   static const scanBarcodeForPhysicalInventory = "v1/barcode/pid";
   static const getMappingLocations = "v1/general/storagelocations";
   static const getMappingCategories = "v1/general/skucategory";
+  static const getTyreCategories = "v1/general/tyrecategories";
   static const getMappingMaterials = "v1/general/sku";
   static const getMappingPlants = "v1/general/plants";
   static const uploadBarcodeDetail = "v1/barcode";
@@ -96,4 +97,5 @@ class UrlHolderLoan {
   static const getReasons = "v1/pdc/master/reasons";
   static const getCompetitors = "v1/pdc/master/competitors";
   static const getModules = "v1/pdc/master/modules";
+  static const competitorBarcode = "v1/pdc/competitor/barcode";
 }

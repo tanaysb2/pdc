@@ -282,7 +282,7 @@ Widget customTile(
   DocumentData document,
   String location,
   BuildContext context,
-  final Function callback,
+  Function callback,
   String type,
   String name, {
   bool isCompletedTab = false,

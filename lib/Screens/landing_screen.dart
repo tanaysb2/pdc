@@ -12,6 +12,8 @@ import 'package:pdc/Providers/receiving_provider.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
 import 'package:pdc/Resuable%20components/text_field.dart';
 import 'package:pdc/Screens/Gate%20in/receiving_screen.dart';
+import 'package:pdc/Screens/Competitor/competitor_module_screen.dart';
+import 'package:pdc/Modules/homepage_model.dart';
 import 'package:pdc/main.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -319,6 +321,10 @@ class _MyAppState extends State<LandingPageScreen> {
   Widget build(BuildContext context) {
     final item = Provider.of<AuthProvider>(context, listen: true);
     final itemReceiving = Provider.of<ReceivingProvider>(context, listen: true);
+    final modules = List<Module>.from(itemReceiving.modules);
+    if (!modules.any((m) => m.moduleName.toLowerCase() == "competitor")) {
+      modules.add(Module(moduleCode: "COMP", moduleName: "Competitor"));
+    }
 
     print(item.usrid);
     return errorShow
@@ -591,9 +597,9 @@ class _MyAppState extends State<LandingPageScreen> {
                                 mainAxisSpacing: 10.h,
                                 childAspectRatio: 0.9,
                               ),
-                          itemCount: itemReceiving.modules.length,
+                          itemCount: modules.length,
                           itemBuilder: (context, index) {
-                            final element = itemReceiving.modules[index];
+                            final element = modules[index];
                             return InkWell(
                               onTap: () {
                                 if (element.moduleName == "Gate In" ||
@@ -645,6 +651,16 @@ class _MyAppState extends State<LandingPageScreen> {
                                       },
                                     ),
                                   );
+                                } else if (element.moduleName == "Competitor") {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) {
+                                        return CompetitorModuleScreen(
+                                          location: forwardValue,
+                                        );
+                                      },
+                                    ),
+                                  );
                                 }
                               },
                               child: gridCustom(
@@ -652,12 +668,16 @@ class _MyAppState extends State<LandingPageScreen> {
                                     ? "assets/MM.svg"
                                     : element.moduleName == "Receive"
                                     ? "assets/return.svg"
+                                    : element.moduleName == "Competitor"
+                                    ? "assets/scanbarcode.svg"
                                     : "assets/inward.svg",
                                 element.moduleName,
-                                show: element.moduleName == "Gate In"
+                                show: element.moduleName == "Gate In" ||
+                                        element.moduleName == "Competitor"
                                     ? false
                                     : true,
-                                size: element.moduleName == "Gate In"
+                                size: element.moduleName == "Gate In" ||
+                                        element.moduleName == "Competitor"
                                     ? false
                                     : true,
                               ),
@@ -709,9 +729,12 @@ Widget gridCustom(
         if (detailShow) SizedBox(height: 10.h),
         Container(
           alignment: Alignment.center,
-          padding: EdgeInsets.symmetric(horizontal: 38.w),
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
           child: Text(
             name,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: textFieldStyle(
               color: Color.fromARGB(255, 7, 70, 122),
               fontSize: 28.sp,
