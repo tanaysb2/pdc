@@ -600,17 +600,13 @@ class ReceivingProvider with ChangeNotifier {
     final request = Request(
       'GET',
 
-      // Uri.parse(
-      //   '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}?documentType=$documentType&departmentCode=MG&location=$location',
-      // ),
+      
       Uri.parse(
         '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}?docType=$documentType&location=$location',
       ),
     );
 
-    log(
-      '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}?docType=$documentType&location=$location',
-    );
+   
 
     request.headers.addAll(headers);
 
@@ -698,12 +694,13 @@ class ReceivingProvider with ChangeNotifier {
 
   /// Fetch SKU-level scanned items for a document.
   ///
-  /// GET `v1/pdc/documents/{documentNumber}/sku/{materialCode}?location=&docType=`
+  
   Future<bool> fetchSkuDetails({
     required String documentNumber,
     required String materialCode,
     required String location,
     required String docType,
+    String materialDescription = "",
   }) async {
     skuDetails = [];
     notifyListeners();
@@ -720,7 +717,7 @@ class ReceivingProvider with ChangeNotifier {
     final request = Request(
       'GET',
       Uri.parse(
-        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}/$documentNumber/sku/$materialCode?location=$location&docType=$docType',
+        '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getDocuments}/$documentNumber/sku/$materialCode?location=$location&docType=$docType&material=$materialDescription',
       ),
     );
 

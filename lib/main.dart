@@ -23,7 +23,7 @@ void main() async {
   configLoading();
 }
 
-void configLoading() {
+void configLoading() {                                             
   EasyLoading.instance
     ..displayDuration = const Duration(milliseconds: 2000)
     ..indicatorType = EasyLoadingIndicatorType.hourGlass
@@ -34,10 +34,10 @@ void configLoading() {
     ..backgroundColor = Colors.green
     ..indicatorColor = Colors.yellow
     ..textColor = Colors.yellow
-    ..maskColor = Colors.blue.withOpacity(0.5)
+    ..maskColor = Colors.blue.withOpacity(0.5)      
     ..userInteractions = false
-    ..dismissOnTap = false;
-}
+    ..dismissOnTap = false;        
+}                                                                     
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -57,7 +57,7 @@ class MyApp extends StatelessWidget {
             builder: EasyLoading.init(),
           );
         },
-        designSize: const Size(720, 1280),
+        designSize: const Size(720, 1280),        
       ),
     );
   }
@@ -73,7 +73,7 @@ class _NavigationState extends State<NavigationScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("userToken");
     final userId = prefs.getString("usrid");
-    log("$token $userId token");
+    log("$token $userId token");     
     // await prefs.clear();
     // SharedPreferences prefs = await SharedPreferences.getInstance();
     // final token = prefs.getString("userToken");
@@ -82,15 +82,17 @@ class _NavigationState extends State<NavigationScreen> {
 
     if (token == null) {
       Navigator.of(
+        // ignore: use_build_context_synchronously
         context,
       ).pushReplacement(MaterialPageRoute(builder: (context) => AuthScreen()));
     } else {
+      // ignore: use_build_context_synchronously
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => LandingPageScreen(userId: userId.toString()),
         ),
       );
-    }
+    }   
   }
 
   @override

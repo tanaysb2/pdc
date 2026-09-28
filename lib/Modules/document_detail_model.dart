@@ -21,6 +21,12 @@ class DocumentDetailData {
   final String jkMatnr;
   final String maktx;
   final String jkMaktx;
+  final String catg;
+  final String ysize;
+  final String make;
+  final String brand;
+  final String pattern;
+  final String serialNo;
   final String pType;
   final String pAction;
   final String name;
@@ -65,6 +71,12 @@ class DocumentDetailData {
     required this.jkMatnr,
     required this.maktx,
     required this.jkMaktx,
+    required this.catg,
+    required this.ysize,
+    required this.make,
+    required this.brand,
+    required this.pattern,
+    required this.serialNo,
     required this.pType,
     required this.pAction,
     required this.name,
@@ -111,6 +123,12 @@ class DocumentDetailData {
       jkMatnr: json['JkMatnr'] as String? ?? "",
       maktx: json['Maktx'] as String? ?? "",
       jkMaktx: json['JkMaktx'] as String? ?? "",
+      catg: json['Catg'] as String? ?? "",
+      ysize: json['Ysize'] as String? ?? "",
+      make: json['Make'] as String? ?? "",
+      brand: json['Brand'] as String? ?? "",
+      pattern: json['Pattern'] as String? ?? "",
+      serialNo: json['SerialNo'] as String? ?? "",
       pType: json['PType'] as String? ?? "",
       pAction: json['PAction'] as String? ?? "",
       name: json['Name'] as String? ?? "",
@@ -158,6 +176,12 @@ class DocumentDetailData {
       'JkMatnr': jkMatnr,
       'Maktx': maktx,
       'JkMaktx': jkMaktx,
+      'Catg': catg,
+      'Ysize': ysize,
+      'Make': make,
+      'Brand': brand,
+      'Pattern': pattern,
+      'SerialNo': serialNo,
       'PType': pType,
       'PAction': pAction,
       'Name': name,

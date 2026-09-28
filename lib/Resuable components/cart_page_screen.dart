@@ -48,6 +48,7 @@ class _CartPageScreenState extends State<CartPageScreen> {
           materialCode: widget.materialCode,
           location: widget.location,
           docType: widget.docType,
+          materialDescription: widget.materialDesc,
         )
         .then((_) {
       if (mounted) {
@@ -73,8 +74,104 @@ class _CartPageScreenState extends State<CartPageScreen> {
           item.prodDt.toLowerCase().contains(query) ||
           item.stencilno.toLowerCase().contains(query) ||
           item.matnr.toLowerCase().contains(query) ||
-          item.docNo.toLowerCase().contains(query);
+          item.docNo.toLowerCase().contains(query) ||
+          item.catg.toLowerCase().contains(query) ||
+          item.ysize.toLowerCase().contains(query) ||
+          item.maktx.toLowerCase().contains(query) ||
+          item.make.toLowerCase().contains(query) ||
+          item.brand.toLowerCase().contains(query) ||
+          item.pattern.toLowerCase().contains(query) ||
+          item.serialNo.toLowerCase().contains(query) ||
+          item.remark.toLowerCase().contains(query);
     }).toList();
+  }
+
+  bool get _isCompetitorSku =>
+      widget.materialCode.toUpperCase().contains('COMPPDCMATNR');
+
+  String _displayValue(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty || trimmed == "0000-00-00") return "-";
+    return trimmed;
+  }
+
+  Widget _competitorCard(DocumentDetailData item) {
+    Widget pair(String leftLabel, String leftValue, String rightLabel, String rightValue) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: _StackedField(
+              label: leftLabel,
+              value: _displayValue(leftValue),
+            ),
+          ),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: _StackedField(
+              label: rightLabel,
+              value: _displayValue(rightValue),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return _InfoCard(
+      children: [
+        _StackedField(label: "Barcode", value: _displayValue(item.barcode)),
+        SizedBox(height: 24.h),
+        pair("Size", item.maktx, "Make", item.make),
+        SizedBox(height: 24.h),
+        pair("Brand", item.brand, "Pattern", item.pattern),
+        SizedBox(height: 24.h),
+        pair("Serial No", item.serialNo, "Production Date", item.prodDt),
+      ],
+    );
+  }
+
+  Widget _regularCard(DocumentDetailData item) {
+    return _InfoCard(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _StackedField(
+                label: "Barcode",
+                value: item.barcode,
+              ),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: _StackedField(
+                label: "Manf Plant",
+                value: item.manfPlant,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 24.h),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _StackedField(
+                label: "Prod. Date",
+                value: item.prodDt,
+              ),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: _StackedField(
+                label: "Stencil No",
+                value: item.stencilno,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   String _headerValue(String fromApi, String fallback) {
@@ -206,49 +303,9 @@ class _CartPageScreenState extends State<CartPageScreen> {
                           ...filteredItems.map(
                             (item) => Padding(
                               padding: EdgeInsets.only(bottom: 16.h),
-                              child: _InfoCard(
-                                children: [
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: _StackedField(
-                                          label: "Barcode",
-                                          value: item.barcode,
-                                        ),
-                                      ),
-                                      SizedBox(width: 16.w),
-                                      Expanded(
-                                        child: _StackedField(
-                                          label: "Manf Plant",
-                                          value: item.manfPlant,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 24.h),
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: _StackedField(
-                                          label: "Prod. Date",
-                                          value: item.prodDt,
-                                        ),
-                                      ),
-                                      SizedBox(width: 16.w),
-                                      Expanded(
-                                        child: _StackedField(
-                                          label: "Stencil No",
-                                          value: item.stencilno,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                              child: _isCompetitorSku
+                                  ? _competitorCard(item)
+                                  : _regularCard(item),
                             ),
                           ),
                         ],

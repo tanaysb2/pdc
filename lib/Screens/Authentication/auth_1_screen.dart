@@ -314,7 +314,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             Container(
                               alignment: Alignment.center,
                               child: Text(
-                                "Version 8",
+                                "Version 9",
                                 style: TextStyle(
                                   color: Color.fromARGB(255, 19, 77, 163),
                                   fontFamily: "NotoSans",

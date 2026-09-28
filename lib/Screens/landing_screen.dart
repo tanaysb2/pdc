@@ -13,7 +13,6 @@ import 'package:pdc/Resuable%20components/loading.dart';
 import 'package:pdc/Resuable%20components/text_field.dart';
 import 'package:pdc/Screens/Gate%20in/receiving_screen.dart';
 import 'package:pdc/Screens/Competitor/competitor_module_screen.dart';
-import 'package:pdc/Modules/homepage_model.dart';
 import 'package:pdc/main.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -321,10 +320,7 @@ class _MyAppState extends State<LandingPageScreen> {
   Widget build(BuildContext context) {
     final item = Provider.of<AuthProvider>(context, listen: true);
     final itemReceiving = Provider.of<ReceivingProvider>(context, listen: true);
-    final modules = List<Module>.from(itemReceiving.modules);
-    if (!modules.any((m) => m.moduleName.toLowerCase() == "competitor")) {
-      modules.add(Module(moduleCode: "COMP", moduleName: "Competitor"));
-    }
+    final modules = itemReceiving.modules;
 
     print(item.usrid);
     return errorShow
@@ -566,6 +562,11 @@ class _MyAppState extends State<LandingPageScreen> {
                                           String firstChar = text[0];
 
                                           userId = firstChar;
+
+                                          Provider.of<ReceivingProvider>(
+                                            context,
+                                            listen: false,
+                                          ).fetchModules(context, forwardValue);
 
                                           setState(() {});
                                         },
