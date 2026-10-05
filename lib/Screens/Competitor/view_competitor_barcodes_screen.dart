@@ -7,6 +7,7 @@ import 'package:pdc/Resuable%20components/app_bar.dart';
 import 'package:pdc/Resuable%20components/date_range_picker.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
 import 'package:pdc/Resuable%20components/text_field.dart';
+import 'package:pdc/Screens/Competitor/add_competitor_barcode_screen.dart';
 import 'package:provider/provider.dart';
 
 class ViewCompetitorBarcodesScreen extends StatefulWidget {
@@ -64,6 +65,20 @@ class _ViewCompetitorBarcodesScreenState
       toDate = DateTime(picked.end.year, picked.end.month, picked.end.day);
     });
     await _fetchBarcodes();
+  }
+
+  Future<void> _openEdit(CompetitorBarcode item) async {
+    final updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => AddCompetitorBarcodeScreen(
+          location: widget.location,
+          item: item,
+        ),
+      ),
+    );
+    if (updated == true && mounted) {
+      await _fetchBarcodes();
+    }
   }
 
   Future<void> _fetchBarcodes() async {
@@ -181,6 +196,30 @@ class _ViewCompetitorBarcodesScreenState
           _fieldRow("Serial No", item.serialNo),
           _fieldRow("Production Date", item.productionDate),
           _fieldRow("Remarks", item.remark),
+          SizedBox(height: 8.h),
+          Align(
+            alignment: Alignment.centerRight,
+            child: SizedBox(
+              height: 52.h,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryBlue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () => _openEdit(item),
+                child: Text(
+                  "Edit",
+                  style: textFieldStyle(
+                    color: Colors.white,
+                    fontSize: 24.sp,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

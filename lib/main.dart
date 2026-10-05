@@ -41,12 +41,15 @@ void configLoading() {
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
+  
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+  final width = MediaQuery.of(context).size.width;
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => AuthProvider()),
-        ChangeNotifierProvider(create: (context) => ReceivingProvider()),
+        ChangeNotifierProvider(create: (context) => AuthProvider()),               
+        ChangeNotifierProvider(create: (context) => ReceivingProvider()),           
       ],
       child: ScreenUtilInit(
         builder: (context, child) {
@@ -54,10 +57,10 @@ class MyApp extends StatelessWidget {
             theme: ThemeData(primarySwatch: Colors.blue),
             home: NavigationScreen(),
             debugShowCheckedModeBanner: false,
-            builder: EasyLoading.init(),
+            builder: EasyLoading.init(),       
           );
         },
-        designSize: const Size(720, 1280),        
+         designSize: const Size(720, 1280),           
       ),
     );
   }

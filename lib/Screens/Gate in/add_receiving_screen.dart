@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pdc/Modules/competitors_model.dart';
 import 'package:pdc/Modules/department_model.dart';
 import 'package:pdc/Modules/purpose_modal.dart';
 import 'package:pdc/Modules/reasons_model.dart';
@@ -51,47 +50,6 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
   void dispose() {
     remarkController.dispose();
     super.dispose();
-  }
-
-  /// Deduplicate competitor names so DropdownButton has exactly one item per value.
-  List<String> _uniqueCompetitorNames(List<Competitor> competitors) {
-    final seen = <String>{};
-    final list = <String>[];
-    for (final c in competitors) {
-      if (seen.add(c.competitorName)) list.add(c.competitorName);
-    }
-    return list;
-  }
-
-  /// Build Company dropdown with unique values and valid selected value.
-  Widget _buildCompanyDropdown(
-    List<Competitor> competitors,
-    String? selectedCompany,
-    ValueChanged<String?> onChanged,
-  ) {
-    final names = _uniqueCompetitorNames(competitors);
-    final validValue =
-        selectedCompany != null && names.contains(selectedCompany)
-        ? selectedCompany
-        : (names.isNotEmpty ? names.first : null);
-    return DropdownButton<String>(
-      iconEnabledColor: Colors.black,
-      value: validValue,
-      style: textFieldStyle(color: Colors.black, fontSize: 24.sp),
-      isExpanded: true,
-      hint: names.isEmpty
-          ? Text(
-              'No companies',
-              style: textFieldStyle(color: Colors.grey, fontSize: 24.sp),
-            )
-          : null,
-      items: names
-          .map(
-            (name) => DropdownMenuItem<String>(value: name, child: Text(name)),
-          )
-          .toList(),
-      onChanged: names.isEmpty ? null : onChanged,
-    );
   }
 
   /// Build Purpose dropdown from provider purposes; value is purposeCode.
@@ -294,10 +252,7 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
   @override
   Widget build(BuildContext context) {
     final item = Provider.of<ReceivingProvider>(context, listen: true);
-    final hideCompanyAndPurpose =
-        widget.name == "Gate Out" || widget.name == "Transfer";
-    final showCompanyType = !hideCompanyAndPurpose;
-    final showPurpose = !hideCompanyAndPurpose;
+    final showPurpose = widget.name != "Gate Out" && widget.name != "Transfer";
     final showReason = widget.name != "Gate In" && widget.name != "Transfer";
     log("type: ${widget.type}");
     return Scaffold(
@@ -343,90 +298,6 @@ class _AddReceivingScreenState extends State<AddReceivingScreen> {
                               //   ),
                               // ),
                               // SizedBox(height: 30.h),
-
-                              // Type dropdown (jk/others)
-                              if (showCompanyType) ...[
-                                Text(
-                                  'Company Type',
-                                  style: textFieldStyle(
-                                    color: Colors.black,
-                                    fontSize: 26.sp,
-                                    weight: FontWeight.w600,
-                                  ),
-                                ),
-                                SizedBox(height: 10.h),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Colors.grey,
-                                      width: 2,
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 15.w,
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      iconEnabledColor: Colors.black,
-                                      value: item.selectedType,
-                                      style: textFieldStyle(
-                                        color: Colors.black,
-                                        fontSize: 24.sp,
-                                      ),
-                                      isExpanded: true,
-                                      items: ["JK Tyre", "Others"].map((
-                                        String value,
-                                      ) {
-                                        return DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(value),
-                                        );
-                                      }).toList(),
-                                      onChanged: (String? newValue) {
-                                        if (newValue != null) {
-                                          item.setSelectedType(newValue);
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 20.h),
-                              ],
-
-                              // Company dropdown (only if "others" is selected)
-                              if (showCompanyType &&
-                                  item.selectedType == "Others") ...[
-                                Text(
-                                  'Company',
-                                  style: textFieldStyle(
-                                    color: Colors.black,
-                                    fontSize: 26.sp,
-                                    weight: FontWeight.w600,
-                                  ),
-                                ),
-                                SizedBox(height: 10.h),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Colors.grey,
-                                      width: 2,
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 15.w,
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: _buildCompanyDropdown(
-                                      item.competitors,
-                                      item.selectedCompany,
-                                      item.setSelectedCompany,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 20.h),
-                              ],
 
                               // Purpose dropdown
                               if (showPurpose) ...[

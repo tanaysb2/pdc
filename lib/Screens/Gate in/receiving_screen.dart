@@ -64,14 +64,7 @@ class _OrderDispatchScreenState extends State<ReceivingScreen>
               context,
               listen: false,
               // ignore: use_build_context_synchronously
-            ).fetchCompetitors(context, widget.location).then((value) {
-              Provider.of<ReceivingProvider>(
-                // ignore: use_build_context_synchronously
-                context,
-                listen: false,
-                // ignore: use_build_context_synchronously
-              ).fetchReasons(context, widget.location);
-            });
+            ).fetchReasons(context, widget.location);
           });
         })
         .then((value) {
@@ -402,34 +395,6 @@ Widget customTile(
                     if (type == "GI") ...[
                       Row(
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Company",
-                                style: textFieldStyle(
-                                  color: Colors.grey.shade800,
-                                  fontSize: 26.sp,
-                                  weight: FontWeight.w500,
-                                ),
-                              ),
-                              SizedBox(height: 3.h),
-                              SizedBox(
-                                width: 320.w,
-                                child: Text(
-                                  document.competitorCode ?? "",
-                                  maxLines: 2,
-                                  style: textFieldStyle(
-                                    color: Color.fromARGB(255, 1, 77, 138),
-                                    fontSize: 28.sp,
-                                    weight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 10.h),
-                            ],
-                          ),
-                          SizedBox(width: 40.w),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

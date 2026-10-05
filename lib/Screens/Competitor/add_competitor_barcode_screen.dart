@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_datawedge/flutter_datawedge.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:pdc/Modules/competitor_barcode_model.dart';
 import 'package:pdc/Providers/receiving_provider.dart';
 import 'package:pdc/Resuable%20components/app_bar.dart';
 import 'package:pdc/Resuable%20components/loading.dart';
@@ -15,8 +15,15 @@ import 'package:provider/provider.dart';
 
 class AddCompetitorBarcodeScreen extends StatefulWidget {
   final String location;
+  final CompetitorBarcode? item;
 
-  const AddCompetitorBarcodeScreen({super.key, required this.location});
+  const AddCompetitorBarcodeScreen({
+    super.key,
+    required this.location,
+    this.item,
+  });
+
+  bool get isEdit => item != null;
 
   @override
   State<AddCompetitorBarcodeScreen> createState() =>
@@ -25,7 +32,6 @@ class AddCompetitorBarcodeScreen extends StatefulWidget {
 
 class _AddCompetitorBarcodeScreenState
     extends State<AddCompetitorBarcodeScreen> {
-  final _formKey = GlobalKey<FormState>();
   final barcodeController = TextEditingController();
   final sizeController = TextEditingController();
   final makeController = TextEditingController();
@@ -58,7 +64,7 @@ class _AddCompetitorBarcodeScreenState
     if (!Platform.isAndroid) return;
     fdw = FlutterDataWedge();
     onScanResultListener = fdw!.onScanResult.listen((result) {
-      if (!mounted) return;
+      if (!mounted || widget.isEdit) return;
       setState(() {
         barcodeController.text = result.data.trim();
       });
@@ -76,9 +82,36 @@ class _AddCompetitorBarcodeScreenState
       listen: false,
     ).fetchTyreCategories();
     if (!mounted) return;
+    _applyEditItem();
     setState(() {
       _isLoading = false;
     });
+  }
+
+  void _applyEditItem() {
+    final item = widget.item;
+    if (item == null) return;
+
+    barcodeController.text = item.barcode;
+    sizeController.text = item.size;
+    makeController.text = item.make;
+    brandController.text = item.brand;
+    patternController.text = item.pattern;
+    serialNoController.text = item.serialNo;
+    remarksController.text = item.remark;
+
+    final prod = item.productionDate.trim();
+    productionDateController.text =
+        (prod.isEmpty || prod == "0000-00-00") ? "" : prod;
+
+    final categories = Provider.of<ReceivingProvider>(
+      context,
+      listen: false,
+    ).tyreCategories;
+    final category = item.category.trim();
+    if (category.isNotEmpty && categories.any((c) => c.code == category)) {
+      selectedCategoryCode = category;
+    }
   }
 
   @override
@@ -91,8 +124,8 @@ class _AddCompetitorBarcodeScreenState
     brandController.dispose();
     patternController.dispose();
     serialNoController.dispose();
-    remarksController.dispose();
-    productionDateController.dispose();
+    remarksController.dispose();    
+    productionDateController.dispose();     
     super.dispose();
   }
 
@@ -115,22 +148,6 @@ class _AddCompetitorBarcodeScreenState
   }
 
   Future<void> _submit() async {
-    if (barcodeController.text.trim().isEmpty) {
-      EasyLoading.showToast(
-        "Please scan barcode",
-        maskType: EasyLoadingMaskType.black,
-      );
-      return;
-    }
-
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      EasyLoading.showToast(
-        "Please fill all required fields",
-        maskType: EasyLoadingMaskType.black,
-      );
-      return;
-    }
-
     setState(() {
       _isLoading = true;
     });
@@ -149,7 +166,8 @@ class _AddCompetitorBarcodeScreenState
       serialNo: serialNoController.text.trim(),
       productionDate: productionDateController.text.trim(),
       remarks: remarksController.text.trim(),
-      location: widget.location,
+      location: widget.location,        
+      isUpdate: widget.isEdit,
     );
 
     if (!mounted) return;
@@ -158,8 +176,12 @@ class _AddCompetitorBarcodeScreenState
     });
 
     if (success) {
-      barcodeController.clear();
-      setState(() {});
+      if (widget.isEdit) {
+        Navigator.of(context).pop(true);
+      } else {
+        barcodeController.clear();
+        setState(() {});
+      }
     }
   }
 
@@ -247,12 +269,6 @@ class _AddCompetitorBarcodeScreenState
               maxLines: maxLines,
               inputFormatters: maxLines == 1 ? upperNoSpace : null,
               style: textFieldStyle(color: Colors.black, fontSize: 24.sp),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return "$label is required";
-                }
-                return null;
-              },
               decoration: _innerDecoration,
             ),
           ),
@@ -273,8 +289,9 @@ class _AddCompetitorBarcodeScreenState
             backgroundColor: Colors.white,
             body: Column(
               children: [
+
                 CustomAppBar(
-                  text: "Add Barcode",
+                  text: widget.isEdit ? "Edit Barcode" : "Add Barcode",
                   trailingIcon: ClipRRect(
                     borderRadius: BorderRadius.circular(16.w),
                     child: Image.asset(
@@ -283,12 +300,11 @@ class _AddCompetitorBarcodeScreenState
                       width: 60.w,
                       fit: BoxFit.cover,
                     ),
-                  ),
+                  ),  
                 ),
+              
                 Expanded(
-                  child: Form(
-                    key: _formKey,
-                    child: SingleChildScrollView(
+                  child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(
                         horizontal: 30.w,
                         vertical: 10.h,
@@ -339,12 +355,6 @@ class _AddCompetitorBarcodeScreenState
                                         setState(() {
                                           selectedCategoryCode = value;
                                         });
-                                      },
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return "Category is required";
-                                        }
-                                        return null;
                                       },
                                       style: textFieldStyle(
                                         color: Colors.black,
@@ -442,7 +452,7 @@ class _AddCompetitorBarcodeScreenState
                               ),
                               onPressed: _submit,
                               child: Text(
-                                "Submit",
+                                widget.isEdit ? "Update" : "Submit",
                                 style: textFieldStyle(
                                   color: Colors.white,
                                   weight: FontWeight.w700,
@@ -465,6 +475,7 @@ class _AddCompetitorBarcodeScreenState
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
                               onPressed: _clearAll,
                               child: Text(
                                 "Clear",
@@ -480,8 +491,9 @@ class _AddCompetitorBarcodeScreenState
                         ],
                       ),
                     ),
-                  ),
                 ),
+               
+              
               ],
             ),
           ),

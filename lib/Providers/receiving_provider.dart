@@ -462,18 +462,9 @@ class ReceivingProvider with ChangeNotifier {
 
     log("includeDepartment: $departmentCode");
 
-    String competitorCode = '';
-    if (includePurpose && selectedType == "Others" && selectedCompany != null) {
-      final list = competitors
-          .where((c) => c.competitorName == selectedCompany)
-          .toList();
-      competitorCode = list.isNotEmpty ? list.first.competitorCode : '';
-    }
-
     final result = await createDocument(
       context,
       docType: docType,
-      competitorCode: competitorCode,
       purposeCode: includePurpose ? purposeCode : null,
       reasonCode: includeReason ? reasonCode : null,
       // storageLocation: storageLocation,
@@ -1076,7 +1067,7 @@ class ReceivingProvider with ChangeNotifier {
                   ),
                   SizedBox(height: 10.0),
                   SizedBox(
-                    width: 120.w,
+                    width: 200.w,
                     height: 70.h,
                     child: Align(
                       alignment: Alignment.center,
@@ -1195,7 +1186,6 @@ class ReceivingProvider with ChangeNotifier {
   Future<Map<String, dynamic>?> createDocument(
     BuildContext context, {
     required String docType,
-    required String competitorCode,
     String? purposeCode,
     String? reasonCode,
     // required String storageLocation,
@@ -1209,7 +1199,7 @@ class ReceivingProvider with ChangeNotifier {
   }) async {
     try {
       // log(
-      //   "createDocument inputs: docType=$docType, competitorCode=$competitorCode, purposeCode=$purposeCode, reasonCode=$reasonCode, storageLocation=$storageLocation, binCode=$binCode, rackCode=$rackCode, departmentCode=MG, location=$location, remark=$remark",
+      //   "createDocument inputs: docType=$docType, purposeCode=$purposeCode, reasonCode=$reasonCode, storageLocation=$storageLocation, binCode=$binCode, rackCode=$rackCode, departmentCode=MG, location=$location, remark=$remark",
       // );
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString("userToken");
@@ -1229,7 +1219,6 @@ class ReceivingProvider with ChangeNotifier {
 
       final body = {
         "documentType": docType,
-        "competitorCode": competitorCode,
         if (purposeCode != null && purposeCode.isNotEmpty)
           "purposeCode": purposeCode,
         if (reasonCode != null && reasonCode.isNotEmpty)
@@ -1525,6 +1514,7 @@ class ReceivingProvider with ChangeNotifier {
   }
 
   /// Creates a competitor barcode via POST `v1/pdc/competitor/barcode`.
+  /// When [isUpdate] is true, the same URL and body are sent with PATCH.
   Future<bool> addCompetitorBarcode(
     BuildContext context, {
     required String barcode,
@@ -1537,6 +1527,7 @@ class ReceivingProvider with ChangeNotifier {
     required String productionDate,
     String remarks = "",
     required String location,
+    bool isUpdate = false,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -1564,12 +1555,12 @@ class ReceivingProvider with ChangeNotifier {
         "pattern": pattern,
         "serialNo": serialNo,
         "productionDate": productionDate,
-        if (remarks.isNotEmpty) "remarks": remarks,
+        if (remarks.isNotEmpty || isUpdate) "remarks": remarks,
         "location": location,
       };
 
       final request = Request(
-        'POST',
+        isUpdate ? 'PATCH' : 'POST',
         Uri.parse(
           '${UrlHolderLoan.baseUrl}${UrlHolderLoan.competitorBarcode}',
         ),
@@ -1577,7 +1568,7 @@ class ReceivingProvider with ChangeNotifier {
       request.body = json.encode(body);      
       request.headers.addAll(headers);        
 
-      log("addCompetitorBarcode body: ${request.body}");
+      log("addCompetitorBarcode method: ${isUpdate ? 'PATCH' : 'POST'} body: ${request.body}");
 
       final response = await request.send().timeout(
         const Duration(seconds: 60),
@@ -1590,14 +1581,18 @@ class ReceivingProvider with ChangeNotifier {
         } catch (_) {}
       }
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204) {
         bool? checkVibrate = await Vibration.hasVibrator();
         if (checkVibrate == true) Vibration.vibrate();
         AudioPlayer().play(AssetSource('audio/sound.wav'));
 
         final message = (decoded is Map && decoded["message"] != null)
             ? decoded["message"].toString()
-            : "Competitor barcode added";
+            : (isUpdate
+                ? "Competitor barcode updated"
+                : "Competitor barcode added");
         errorMessage = message;
         EasyLoading.showToast(
           message,
@@ -1746,7 +1741,7 @@ class ReceivingProvider with ChangeNotifier {
       final request = Request(
         'GET',
         Uri.parse(
-          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getTyreCategories}',
+          '${UrlHolderLoan.baseUrl}${UrlHolderLoan.getSkuCategories}',
         ),
       );
       request.headers.addAll({'Authorization': 'Bearer $token'});
@@ -2125,7 +2120,7 @@ class ReceivingProvider with ChangeNotifier {
                   ),
                   SizedBox(height: 10.0),
                   SizedBox(
-                    width: 120.w,
+                    width: 200.w,
                     height: 70.h,
                     child: Align(
                       alignment: Alignment.center,

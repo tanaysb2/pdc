@@ -79,6 +79,7 @@ class UrlHolderLoan {
   static const getMappingLocations = "v1/general/storagelocations";
   static const getMappingCategories = "v1/general/skucategory";
   static const getTyreCategories = "v1/general/tyrecategories";
+  static const getSkuCategories = "v1/pdc/master/skucategory";
   static const getMappingMaterials = "v1/general/sku";
   static const getMappingPlants = "v1/general/plants";
   static const uploadBarcodeDetail = "v1/barcode";
