@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:pdc/Urls/url_holder_loan.dart';
 
 class ReceivingDetailModel {
   final String locCd;
@@ -203,7 +204,7 @@ Future<ReceivingDetailListResponse> fetchReceivingDetails({
   };
 
   final uri = Uri.parse(
-    'http://10.10.10.129:7000/api/v1/pdc/documents/$docNo?location=$location',
+    '${UrlHolderLoan.baseUrl}pdc/documents/$docNo?location=$location',
   );
 
   final request = http.Request('GET', uri);

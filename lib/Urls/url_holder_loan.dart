@@ -3,10 +3,16 @@ class UrlHolderLoan {
   //// quality or development
   // static const baseUrl = "http://10.10.10.129:7000/api/";
   //// production
-  // static const baseUrl = "http://10.10.10.132:7000/api/";
-  static const baseUrl = "http://10.10.10.129:7000/api/";
-  // static const baseUrl = "https://82a0-202-144-62-131.ngrok-free.app//api/";
-  //
+  
+  // static const baseUrl = "http://10.10.10.129:7000/api/";
+  
+  //new change of url
+
+
+  static const baseUrl = "https://barcode-api.jktyre.co.in/api/";
+
+
+
   static const login = "v1/auth/login";
   static const locaton = "v1/pdc/master/locations";
   static const purpose = "v1/pdc/master/purposes";
